@@ -12,7 +12,7 @@
     --bg:#FFFFFF; --bg-alt:#F5F6FA; --card:#FFFFFF; --line:#E7E8EF; --ink:#14161F;
     --muted:#767B8A; --muted-2:#9CA0AC; --accent:#5B4FE9; --accent-soft:#EEECFE;
     --accent-ink:#3A2FCB; --ok:#12B886; --ok-soft:#E4FAF3; --warn:#F5A623;
-    --warn-soft:#FEF3E0; --bad:#FF5C6C; --bad-soft:#FFEBED;
+    --warn-soft:#FEF3E0; --bad:#FF5C6C; --bad-soft:#FFEBED; --info:#2F80ED; --info-soft:#EBF4FF;
     --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
     --font-display:'Space Grotesk', Arial, sans-serif;
     --font-body:'Inter', Arial, sans-serif;
@@ -22,8 +22,20 @@
   }
   *{box-sizing:border-box;} html,body{margin:0;padding:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); min-height:100vh; overflow-x: hidden;}
   a{color:inherit;} button{font-family:inherit;cursor:pointer;} input,select{font-family:inherit;}
-  .page{max-width:1180px;margin:0 auto;padding:44px 24px 100px;}
-  .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px;}
+  .page{max-width:1180px;margin:0 auto;padding:44px 24px 100px; position: relative;}
+  
+  /* --- AUTH & MODAL STYLES --- */
+  .auth-bar { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px; z-index: 10; }
+  .auth-user { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(20,22,31,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal-card { background: var(--card); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow-md); position:relative; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; transition: color 0.2s;}
+  .modal-close:hover { color: var(--ink); }
+  .visitor-banner { background: var(--info-soft); color: var(--info); padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); margin-bottom: 24px; display: none; border: 1px solid rgba(47, 128, 237, 0.2);}
+  /* -------------------------- */
+
+  .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px; margin-top: 20px;}
   .hero-eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:10px;}
   .hero-title{font-family:var(--font-display); font-weight:700; font-size:clamp(30px,4.4vw,44px); margin:0; line-height:1.05;}
   .io-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap; align-items:center;}
@@ -91,15 +103,9 @@
   .ic-photo img{width:100%;height:100%;object-fit:cover;display:block; position:relative; z-index:1;}
   .ic-photo .ph-placeholder{width:100%;height:100%; display:flex;align-items:center;justify-content:center; position:absolute; top:0; left:0; z-index:0;}
   .ic-avail{position:absolute;top:10px;left:10px; font-size:10.5px;font-weight:700; padding:4px 9px; border-radius:999px; z-index:2;}
-  
-  /* --- FIX AFFICHAGE BOUTONS MOBILE --- */
   .ic-icons{position:absolute;top:8px;right:8px; display:flex;gap:5px; opacity:0; transition:opacity .15s; z-index:2;}
   .item-card:hover .ic-icons{opacity:1;}
-  @media (hover: none) {
-    .ic-icons { opacity: 1 !important; }
-  }
-  /* ------------------------------------ */
-  
+  @media (hover: none) { .ic-icons { opacity: 1 !important; } }
   .ic-icons button{background:rgba(255,255,255,0.92); border:none;border-radius:50%; width:28px;height:28px; display:flex;align-items:center;justify-content:center; box-shadow:var(--shadow-sm);}
   .ic-icons svg {width: 14px; height: 14px;}
   .ic-body{padding:13px 14px 15px;}
@@ -159,7 +165,7 @@
   footer{margin-top:70px;text-align:center;font-size:12px;color:var(--muted-2);line-height:1.6;}
   @media (max-width: 900px) { .field-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 768px) {
-    .page { padding: 24px 16px 80px; }
+    .page { padding: 64px 16px 80px; }
     .hero { flex-direction: column; align-items: flex-start; gap: 20px; }
     .hero-stats { width: 100%; justify-content: space-between; gap: 10px; }
     .stat { flex: 1; min-width: 30%; padding: 12px; text-align: center; }
@@ -172,10 +178,7 @@
     .total-card { padding: 24px; text-align: center; }
     .donut-wrap { flex-direction: column; align-items: center; gap: 24px; }
     .donut-legend { width: 100%; }
-    
-    /* FIX MOBILE ADDITIONNEL: SECURITÉ POUR S'ASSURER QUE CA FONCTIONNE MEME SI HOVER:NONE N'EST PAS DETECTE */
     .ic-icons { opacity: 1 !important; }
-    
     .new-cat { flex-direction: column; align-items: stretch; width: 100%; }
     .new-cat select, .new-cat input { max-width: 100%; width: 100%; margin-bottom: 5px; }
     .new-cat button { align-self: flex-end; }
@@ -188,13 +191,49 @@
 </style>
 </head>
 <body>
-<div class="page">
+
+<!-- BARRE D'AUTHENTIFICATION -->
+<div class="auth-bar" id="authBar">
+  <!-- Rempli dynamiquement par JS -->
+</div>
+
+<!-- MODALE D'AUTHENTIFICATION -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-card">
+    <button class="modal-close" onclick="window.closeAuthModal()">✕</button>
+    <h2 id="authTitle" style="margin-top:0; font-family:var(--font-display);">Connexion</h2>
+    
+    <div class="field" style="margin-bottom:14px;">
+      <label class="field-title">Email</label>
+      <input type="email" id="authEmail" placeholder="votre@email.com">
+    </div>
+    <div class="field" style="margin-bottom:24px;">
+      <label class="field-title">Mot de passe</label>
+      <input type="password" id="authPassword" placeholder="••••••••">
+    </div>
+    
+    <p id="authError" style="color:var(--bad); font-size:12.5px; display:none; margin-top:-10px; margin-bottom:14px; line-height:1.4;"></p>
+    
+    <button class="btn btn-primary" style="width:100%; margin-bottom:14px;" id="authSubmitBtn">Se connecter</button>
+    
+    <div style="text-align:center; font-size:12.5px; color:var(--muted);">
+      <span id="authToggleText">Pas de compte ?</span> 
+      <a href="#" id="authToggleLink" style="color:var(--accent); font-weight:600; text-decoration:none;">S'inscrire</a>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="mainPageContent">
+  
+  <div id="visitorBanner" class="visitor-banner">
+    👀 Mode Lecture Seule : Vous regardez la liste de quelqu'un d'autre.
+  </div>
+
   <div class="hero">
     <div>
       <span class="hero-eyebrow">Wishlist Partagée</span>
       <h1 class="hero-title">Ma liste de<br>vêtements</h1>
       <div class="io-actions">
-        <!-- APPEL DIRECT À LA FONCTION DE PARTAGE INFAILLIBLE -->
         <button class="share-badge" id="shareBtn" onclick="partagerListe()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           Partager cette liste
@@ -208,57 +247,60 @@
     </div>
   </div>
 
-  <div class="section-head collapsible-head" onclick="window.togglePanel('addArticlePanel', 'addArticleIcon')">
-    <span class="num">01</span>
-    <h2>Ajouter un article</h2>
-    <svg id="addArticleIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-    <div class="line"></div>
-  </div>
+  <!-- SECTION AJOUT PROTEGÉE -->
+  <div id="ownerAddSection" style="display:none;">
+    <div class="section-head collapsible-head" onclick="window.togglePanel('addArticlePanel', 'addArticleIcon')">
+      <span class="num">01</span>
+      <h2>Ajouter un article</h2>
+      <svg id="addArticleIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <div class="line"></div>
+    </div>
 
-  <div class="panel panel-content" id="addArticlePanel">
-    <div class="panel-body">
-      <div class="preview-box" id="previewBox">
-        <span class="preview-placeholder" id="previewPlaceholder">La photo apparaîtra ici une fois le lien collé</span>
-      </div>
-      <div style="flex:1;">
-        <div class="field" style="margin-bottom:14px;">
-          <label class="field-title" for="f-url">Lien du vêtement</label>
-          <input id="f-url" type="url" placeholder="https://www.laboutique.com/produit...">
+    <div class="panel panel-content" id="addArticlePanel">
+      <div class="panel-body">
+        <div class="preview-box" id="previewBox">
+          <span class="preview-placeholder" id="previewPlaceholder">La photo apparaîtra ici une fois le lien collé</span>
         </div>
-        <div class="field-grid">
-          <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
-          <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
-          <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
-          <div class="field">
-            <label class="field-title">Disponibilité</label>
-            <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; color: var(--ink); font-weight: normal; font-size: 13.5px;">
-              <input type="checkbox" id="f-avail-rupture" style="width: 18px; height: 18px; accent-color: var(--ink); cursor: pointer;">
-              Rupture de stock
-            </label>
+        <div style="flex:1;">
+          <div class="field" style="margin-bottom:14px;">
+            <label class="field-title" for="f-url">Lien du vêtement</label>
+            <input id="f-url" type="url" placeholder="https://www.laboutique.com/produit...">
           </div>
-          <div class="field"><label class="field-title" for="f-cat">Catégorie</label><select id="f-cat"></select></div>
-        </div>
-        <div class="field" style="margin-top:14px;"><label class="field-title" for="f-note">Repère (optionnel)</label><input id="f-note" type="text" placeholder="Ex : pull col rond bleu marine"></div>
-        <div class="field" style="margin-top:14px;">
-          <label class="field-title" for="f-tags-input">Étiquettes (couleur, boutique, occasion...)</label>
-          <div class="tag-input-box" id="tagInputBox">
-            <input type="color" id="f-tag-color" value="#D6409F" title="Couleur de l'étiquette">
-            <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée" autocomplete="off">
-            <div class="tag-suggestions" id="tagSuggestions"></div>
+          <div class="field-grid">
+            <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
+            <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
+            <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
+            <div class="field">
+              <label class="field-title">Disponibilité</label>
+              <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; color: var(--ink); font-weight: normal; font-size: 13.5px;">
+                <input type="checkbox" id="f-avail-rupture" style="width: 18px; height: 18px; accent-color: var(--ink); cursor: pointer;">
+                Rupture de stock
+              </label>
+            </div>
+            <div class="field"><label class="field-title" for="f-cat">Catégorie</label><select id="f-cat"></select></div>
           </div>
-        </div>
-        <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main — vos modifications ne seront pas écrasées.</p>
-        <div class="field" id="manualImgField" style="margin-top:10px;"><label class="field-title" for="f-image">URL de l'image manuelle</label><input id="f-image" type="url" placeholder="https://.../photo.jpg"></div>
-        <div class="panel-actions">
-          <button class="btn btn-ghost" id="cancelEdit" style="display:none;">Annuler</button>
-          <button class="btn btn-primary" id="submitBtn">Ajouter à la liste</button>
+          <div class="field" style="margin-top:14px;"><label class="field-title" for="f-note">Repère (optionnel)</label><input id="f-note" type="text" placeholder="Ex : pull col rond bleu marine"></div>
+          <div class="field" style="margin-top:14px;">
+            <label class="field-title" for="f-tags-input">Étiquettes (couleur, boutique, occasion...)</label>
+            <div class="tag-input-box" id="tagInputBox">
+              <input type="color" id="f-tag-color" value="#D6409F" title="Couleur de l'étiquette">
+              <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée" autocomplete="off">
+              <div class="tag-suggestions" id="tagSuggestions"></div>
+            </div>
+          </div>
+          <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main.</p>
+          <div class="field" id="manualImgField" style="margin-top:10px;"><label class="field-title" for="f-image">URL de l'image manuelle</label><input id="f-image" type="url" placeholder="https://.../photo.jpg"></div>
+          <div class="panel-actions">
+            <button class="btn btn-ghost" id="cancelEdit" style="display:none;">Annuler</button>
+            <button class="btn btn-primary" id="submitBtn">Ajouter à la liste</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="section-head collapsible-head" onclick="window.togglePanel('filtersPanel', 'filtersIcon')">
-    <span class="num">02</span>
+    <span class="num owner-num">02</span>
     <h2>Catégories & Filtres</h2>
     <svg id="filtersIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
     <div class="line"></div>
@@ -272,7 +314,7 @@
 
   <div id="racks"></div>
 
-  <div class="section-head"><span class="num">03</span><h2>Résumé</h2><div class="line"></div></div>
+  <div class="section-head"><span class="num owner-num-last">03</span><h2>Résumé</h2><div class="line"></div></div>
   <div class="summary-grid">
     <div class="total-card">
       <div class="total-label">Total de la liste</div>
@@ -294,7 +336,6 @@
   <footer>Les données sont sauvegardées en temps réel sur le cloud (Firebase).</footer>
 </div>
 
-<!-- LE SCRIPT DE PARTAGE INFAILLIBLE (Placé hors du module) -->
 <script>
   function partagerListe() {
     const url = window.location.href;
@@ -304,12 +345,8 @@
       try {
         navigator.clipboard.writeText(url).then(() => alert("✅ Lien copié dans le presse-papier !"));
       } catch (err) {
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
+        const input = document.createElement('input'); input.value = url;
+        document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
         alert("✅ Lien copié dans le presse-papier !");
       }
     }
@@ -319,6 +356,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDRXvj7ZQIiq1IdlzX2klFtLjoOPp-MCCw",
@@ -332,6 +370,7 @@
   
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
   const BACKEND_URL = "https://scraper-wishlist.onrender.com";
 
@@ -340,6 +379,84 @@
     listId = Math.random().toString(36).substring(2, 8);
     window.history.replaceState(null, '', '?liste=' + listId);
   }
+
+  // --- LOGIQUE AUTHENTIFICATION ---
+  let currentUser = null;
+  let authMode = 'login'; // 'login' ou 'signup'
+
+  window.openAuthModal = function(mode = 'login') {
+    authMode = mode;
+    document.getElementById('authModal').classList.add('open');
+    document.getElementById('authError').style.display = 'none';
+    document.getElementById('authEmail').value = '';
+    document.getElementById('authPassword').value = '';
+    
+    if(mode === 'login') {
+      document.getElementById('authTitle').innerText = 'Connexion';
+      document.getElementById('authSubmitBtn').innerText = 'Se connecter';
+      document.getElementById('authToggleText').innerText = 'Pas de compte ?';
+      document.getElementById('authToggleLink').innerText = "S'inscrire";
+    } else {
+      document.getElementById('authTitle').innerText = 'Créer un compte';
+      document.getElementById('authSubmitBtn').innerText = "S'inscrire";
+      document.getElementById('authToggleText').innerText = 'Déjà un compte ?';
+      document.getElementById('authToggleLink').innerText = "Se connecter";
+    }
+  }
+
+  window.closeAuthModal = function() {
+    document.getElementById('authModal').classList.remove('open');
+  }
+
+  document.getElementById('authToggleLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.openAuthModal(authMode === 'login' ? 'signup' : 'login');
+  });
+
+  document.getElementById('authSubmitBtn').addEventListener('click', async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errEl = document.getElementById('authError');
+    errEl.style.display = 'none';
+
+    if(!email || !password) {
+      errEl.innerText = "Veuillez remplir tous les champs.";
+      errEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      if(authMode === 'login') {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      window.closeAuthModal();
+    } catch(error) {
+      let msg = "Une erreur est survenue.";
+      if(error.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
+      if(error.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
+      if(error.code === 'auth/weak-password') msg = "Le mot de passe doit faire au moins 6 caractères.";
+      errEl.innerText = msg;
+      errEl.style.display = 'block';
+    }
+  });
+
+  window.logout = function() {
+    signOut(auth);
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    const authBar = document.getElementById('authBar');
+    if(user) {
+      authBar.innerHTML = `<span class="auth-user">${user.email}</span><button class="btn btn-small" onclick="window.logout()">Déconnexion</button>`;
+    } else {
+      authBar.innerHTML = `<button class="btn btn-small" onclick="window.openAuthModal('login')">Se connecter</button>`;
+    }
+    checkOwnershipAndRender();
+  });
+  // ---------------------------------
 
   window.togglePanel = function(panelId, iconId) {
     const panel = document.getElementById(panelId);
@@ -362,9 +479,10 @@
     return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id);
   }
 
-  let state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
-  let localCollapsedCats = []; // Gestion locale et privée du repliage des catégories
+  let state = { ownerId: null, categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
+  let localCollapsedCats = []; 
   let hasInitCats = false;
+  let isStateLoaded = false;
 
   let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0;
   let chartExcluded = new Set(); 
@@ -378,23 +496,69 @@
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
   function iconHanger(color){ return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6"><circle cx="12" cy="4" r="1.6"/><path d="M12 6v2"/><path d="M2 20l8.5-6a2 2 0 012.9 0L22 20"/><path d="M2 20h20"/></svg>`; }
 
+  // --- LOGIQUE DE PROPRIÉTAIRE ---
+  function isOwner() {
+    // Si la liste a un propriétaire défini, on vérifie que c'est l'utilisateur actuel
+    if (state.ownerId) {
+      return currentUser !== null && currentUser.uid === state.ownerId;
+    }
+    // Si la liste est ancienne et n'a pas de propriétaire, ou vient d'être créée, on donne l'accès par défaut (pour l'instant)
+    return true; 
+  }
+
+  function checkOwnershipAndRender() {
+    if (!isStateLoaded) return; // On attend que Firebase Database ait répondu
+    
+    // Logique de nouvelle liste
+    if (!state.ownerId && state.items.length === 0) {
+      if (currentUser) {
+        state.ownerId = currentUser.uid;
+        saveState(); // On assigne la liste au nouvel utilisateur
+      } else {
+        // La liste est vierge mais l'utilisateur n'est pas connecté
+        document.getElementById('racks').innerHTML = `<div class="global-empty"><strong>Création de liste</strong><p style="margin-bottom:16px;">Veuillez vous connecter ou créer un compte gratuit pour créer et conserver cette liste.</p><button class="btn btn-primary" onclick="window.openAuthModal('signup')">Créer mon compte</button></div>`;
+        document.getElementById('ownerAddSection').style.display = 'none';
+        document.getElementById('visitorBanner').style.display = 'none';
+        document.querySelector('.owner-num').textContent = "01";
+        document.querySelector('.owner-num-last').textContent = "02";
+        return; // On arrête l'affichage normal
+      }
+    }
+
+    const ownerMode = isOwner();
+    document.getElementById('ownerAddSection').style.display = ownerMode ? 'block' : 'none';
+    document.getElementById('visitorBanner').style.display = (!ownerMode && state.ownerId) ? 'block' : 'none';
+    
+    // Mise à jour des numéros de section pour que ça reste logique
+    document.querySelector('.owner-num').textContent = ownerMode ? "02" : "01";
+    document.querySelector('.owner-num-last').textContent = ownerMode ? "03" : "02";
+
+    render();
+  }
+  // --------------------------------
+
   function loadState(){
     onSnapshot(doc(db, "wishlists", listId), (docSnap) => {
+      isStateLoaded = true;
       if (docSnap.exists()) { state = docSnap.data(); } 
-      else { state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; saveState(); }
+      else { state = { ownerId: null, categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
+      
       if(!state.tagColors) state.tagColors = {};
       ensureDefaultCategories(); 
       
-      // On replie par défaut uniquement au premier chargement de la page pour ne pas perturber l'utilisateur ensuite
       if(!hasInitCats) {
         localCollapsedCats = defaultCollapsedCats(state.categories);
         hasInitCats = true;
       }
-      render();
+      checkOwnershipAndRender();
     });
   }
 
-  function saveState(){ setDoc(doc(db, "wishlists", listId), state).catch(e => console.error("Erreur Firebase:", e)); }
+  function saveState(){ 
+    if (!isOwner()) return; // Sécurité Frontend
+    setDoc(doc(db, "wishlists", listId), state).catch(e => console.error("Erreur Firebase:", e)); 
+  }
+  
   function guessShopFromUrl(url){ try{ const u = new URL(url); let host = u.hostname.replace(/^www\./,''); const parts = host.split('.'); return (parts.length > 2 ? parts[parts.length-2] : parts[0]).replace(/^\w/, c => c.toUpperCase()); }catch(e){ return ''; } }
   function getTopLevelCategories(){ return state.categories.filter(c => !c.parentId); }
   function getChildren(parentId){ return state.categories.filter(c => c.parentId === parentId); }
@@ -417,54 +581,29 @@
       if (token !== fetchToken) return;
 
       if (itemData) {
-        // Image
-        if (itemData.image) {
-          fetchedImage = itemData.image;
-          box.innerHTML = `<img src="${escapeHtml(itemData.image)}" alt="Aperçu"><span class="preview-status">Photo trouvée ✓</span>`;
-        } else {
-          box.innerHTML = `<span class="preview-placeholder">Pas de photo trouvée</span>`;
-        }
+        if (itemData.image) { fetchedImage = itemData.image; box.innerHTML = `<img src="${escapeHtml(itemData.image)}" alt="Aperçu"><span class="preview-status">Photo trouvée ✓</span>`; } 
+        else { box.innerHTML = `<span class="preview-placeholder">Pas de photo trouvée</span>`; }
 
-        // Boutique
         const shopField = document.getElementById('f-shop');
-        if (!shopField.dataset.touched && itemData.shop) {
-          shopField.value = itemData.shop;
-        }
+        if (!shopField.dataset.touched && itemData.shop) { shopField.value = itemData.shop; }
 
-        // Repère / Titre
         const noteField = document.getElementById('f-note');
-        if (!noteField.value && itemData.title) {
-          noteField.value = itemData.title.slice(0, 80);
-        }
+        if (!noteField.value && itemData.title) { noteField.value = itemData.title.slice(0, 80); }
 
-        // Prix
-        const priceField = document.getElementById('f-price');
-        const priceHint = document.getElementById('priceHint');
+        const priceField = document.getElementById('f-price'); const priceHint = document.getElementById('priceHint');
         if (!priceField.dataset.touched) {
           if (typeof itemData.price === 'number') {
             priceField.value = itemData.price;
             if (priceHint) {
-              if (itemData.price_confidence === 'low') {
-                priceHint.textContent = '⚠️ Prix estimé, vérifiez-le';
-                priceHint.style.display = 'block';
-              } else {
-                priceHint.style.display = 'none';
-              }
+              if (itemData.price_confidence === 'low') { priceHint.textContent = '⚠️ Prix estimé, vérifiez-le'; priceHint.style.display = 'block'; } 
+              else { priceHint.style.display = 'none'; }
             }
-          } else if (priceHint) {
-            priceHint.textContent = 'ℹ️ Prix non détecté, entrez-le manuellement';
-            priceHint.style.display = 'block';
-          }
+          } else if (priceHint) { priceHint.textContent = 'ℹ️ Prix non détecté, entrez-le manuellement'; priceHint.style.display = 'block'; }
         }
 
-        // Disponibilité
         const availCheckbox = document.getElementById('f-avail-rupture');
-        if (!availCheckbox.dataset.touched && itemData.availability === 'outofstock') {
-          availCheckbox.checked = true;
-        }
-      } else {
-        throw new Error(itemData.error || 'Données incomplètes');
-      }
+        if (!availCheckbox.dataset.touched && itemData.availability === 'outofstock') { availCheckbox.checked = true; }
+      } else { throw new Error(itemData.error || 'Données incomplètes'); }
     } catch(e) {
       if (token !== fetchToken) return;
       box.innerHTML = `<span class="preview-placeholder" style="color:var(--bad);">Échec du scraping. Entrez les infos manuellement.</span>`;
@@ -498,8 +637,7 @@
   }
 
   function addTagFromInput(){ 
-    const input = document.getElementById('f-tags-input'); 
-    const colorInput = document.getElementById('f-tag-color');
+    const input = document.getElementById('f-tags-input'); const colorInput = document.getElementById('f-tag-color');
     const val = input.value.trim().replace(/,$/, ''); 
     if(val){ 
       if(!state.tagColors) state.tagColors = {};
@@ -507,55 +645,33 @@
       if(!currentTags.includes(val)) currentTags.push(val); 
       saveState(); renderTagInputChips(); 
     } 
-    input.value = ''; 
-    hideTagSuggestions();
+    input.value = ''; hideTagSuggestions();
   }
 
-  function hideTagSuggestions(){
-    const box = document.getElementById('tagSuggestions');
-    box.innerHTML = ''; box.classList.remove('open');
-  }
+  function hideTagSuggestions(){ const box = document.getElementById('tagSuggestions'); box.innerHTML = ''; box.classList.remove('open'); }
 
   function renderTagSuggestions(){
-    const input = document.getElementById('f-tags-input');
-    const box = document.getElementById('tagSuggestions');
-    const query = input.value.trim().toLowerCase();
+    const input = document.getElementById('f-tags-input'); const box = document.getElementById('tagSuggestions'); const query = input.value.trim().toLowerCase();
     if(!query){ hideTagSuggestions(); return; }
-    
-    // NOUVEAU: Récupère TOUTES les étiquettes (celles avec couleurs manuelles + celles de tous les vêtements existants)
-    const allKnownTags = [...new Set([
-      ...Object.keys(state.tagColors || {}),
-      ...state.items.flatMap(i => i.tags || [])
-    ])];
-
+    const allKnownTags = [...new Set([...Object.keys(state.tagColors || {}), ...state.items.flatMap(i => i.tags || [])])];
     const matches = allKnownTags.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
     if(matches.length === 0){ hideTagSuggestions(); return; }
     box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join('');
     box.classList.add('open');
-    box.querySelectorAll('[data-suggest]').forEach(el => {
-      // Le preventDefault empêche l'input de perdre le focus (ce qui casserait la suggestion)
-      el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); });
-    });
+    box.querySelectorAll('[data-suggest]').forEach(el => { el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); }); });
   }
 
   function applyTagSuggestion(tag){
     if(!currentTags.includes(tag)) currentTags.push(tag);
-    const input = document.getElementById('f-tags-input');
-    input.value = ''; input.focus();
-    hideTagSuggestions();
-    saveState(); renderTagInputChips();
+    const input = document.getElementById('f-tags-input'); input.value = ''; input.focus();
+    hideTagSuggestions(); saveState(); renderTagInputChips();
   }
 
   document.getElementById('f-tags-input').addEventListener('input', renderTagSuggestions);
   document.getElementById('f-tags-input').addEventListener('focus', renderTagSuggestions);
   document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); });
-
   document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
-  
-  // NOUVEAU: Simplification du 'blur' pour ne plus interférer avec les clics sur les boutons
-  document.getElementById('f-tags-input').addEventListener('blur', () => { 
-    setTimeout(hideTagSuggestions, 150); 
-  });
+  document.getElementById('f-tags-input').addEventListener('blur', () => { setTimeout(hideTagSuggestions, 150); });
 
   function renderCategorySelect(){
     const sel = document.getElementById('f-cat'); let html = '';
@@ -577,27 +693,23 @@
   document.getElementById('cancelEdit').addEventListener('click', resetForm);
 
   document.getElementById('submitBtn').addEventListener('click', () => {
+    if(!isOwner()) return; // Sécurité Frontend
     const url = document.getElementById('f-url').value.trim(), shop = document.getElementById('f-shop').value.trim(), price = parseFloat(document.getElementById('f-price').value);
-    const size = document.getElementById('f-size').value.trim();
-    const avail = document.getElementById('f-avail-rupture').checked ? 'Rupture' : 'En stock';
-    let cat = document.getElementById('f-cat').value;
-    if (!cat && state.categories.length > 0) cat = state.categories[0].id;
+    const size = document.getElementById('f-size').value.trim(); const avail = document.getElementById('f-avail-rupture').checked ? 'Rupture' : 'En stock';
+    let cat = document.getElementById('f-cat').value; if (!cat && state.categories.length > 0) cat = state.categories[0].id;
     const note = document.getElementById('f-note').value.trim();
     if(!url || !shop || isNaN(price)){ alert('Merci de renseigner au moins le lien, la boutique et le prix.'); return; }
     
-    // NOUVEAU: Si on a tapé un texte dans le champ des étiquettes et qu'on clique sur "ajouter", ça crée l'étiquette.
     if(document.getElementById('f-tags-input').value.trim()) addTagFromInput();
-    
     const tags = [...currentTags];
     if(editingId){ Object.assign(state.items.find(i => i.id === editingId), {url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null}); } 
     else { state.items.push({ id: uid(), url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null, addedAt: Date.now() }); }
     
-    saveState(); 
-    resetForm();
-    render(); 
+    saveState(); resetForm(); render(); 
   });
 
   window.startEdit = function(id){
+    if(!isOwner()) return;
     const item = state.items.find(i => i.id === id); if(!item) return; editingId = id;
     const panel = document.getElementById('addArticlePanel'); const icon = document.getElementById('addArticleIcon');
     panel.classList.remove('collapsed'); icon.classList.remove('rotated');
@@ -612,72 +724,70 @@
   }
   
   window.deleteItem = function(id){ 
-    state.items = state.items.filter(i => i.id !== id); 
-    saveState(); 
-    render();
+    if(!isOwner()) return;
+    state.items = state.items.filter(i => i.id !== id); saveState(); render();
   }
   
   document.getElementById('searchInput').addEventListener('input', render);
 
-  function renderCatChip(cat, isSub, hasChildren = false){ 
-    const active = activeCategoryFilter === cat.id; 
-    const isCollapsed = localCollapsedCats.includes(cat.id);
+  function renderCatChip(cat, isSub, hasChildren = false, ownerMode = false){ 
+    const active = activeCategoryFilter === cat.id; const isCollapsed = localCollapsedCats.includes(cat.id);
     const expandBtn = hasChildren ? `<span class="cat-expand ${isCollapsed?'collapsed':''}" data-togglecat="${cat.id}">▼</span>` : '';
-    const delBtn = `<span class="chip-del" data-delcat="${cat.id}">✕</span>`;
+    const delBtn = ownerMode ? `<span class="chip-del" data-delcat="${cat.id}">✕</span>` : '';
     return `<button class="chip ${active?'active':''} ${isSub?'chip-sub':''}" data-filter="${cat.id}"><span class="dot" style="background:${cat.color}"></span>${isSub?'↳ ':''}${escapeHtml(cat.name)} ${expandBtn}${delBtn}</button>`; 
   }
 
   function renderCategoryToolbar(){
+    const ownerMode = isOwner();
     const el = document.getElementById('catToolbar');
     let html = `<button class="chip ${activeCategoryFilter==='all'?'active':''}" data-filter="all">Toutes</button>`;
     getTopLevelCategories().forEach(top => { 
       const children = getChildren(top.id);
-      html += renderCatChip(top, false, children.length > 0); 
-      // NOUVEAU: Utilisation de la mémoire locale pour l'affichage
-      if (!localCollapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true); }); }
+      html += renderCatChip(top, false, children.length > 0, ownerMode); 
+      if (!localCollapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true, false, ownerMode); }); }
     });
-    const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join('');
-    html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie principale</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`;
+    
+    // N'afficher la création de catégorie que si on est propriétaire
+    if (ownerMode) {
+      const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join('');
+      html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie principale</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`;
+    }
     el.innerHTML = html;
     
     el.querySelectorAll('.chip[data-filter]').forEach(btn => { btn.addEventListener('click', (e) => { if(e.target.closest('[data-delcat]') || e.target.closest('[data-togglecat]')) return; activeCategoryFilter = btn.dataset.filter; render(); }); });
     el.querySelectorAll('[data-togglecat]').forEach(btn => { 
       btn.addEventListener('click', (e) => { 
-        e.stopPropagation(); 
-        const id = btn.dataset.togglecat; 
-        if(localCollapsedCats.includes(id)) { 
-          localCollapsedCats = localCollapsedCats.filter(c => c !== id); 
-        } else { 
-          localCollapsedCats.push(id); 
-        } 
-        render(); // NOUVEAU: On ne sauvegarde plus sur Firebase, c'est purement visuel
-      }); 
-    });
-    el.querySelectorAll('[data-delcat]').forEach(btn => { 
-      btn.addEventListener('click', (e) => { 
-        e.stopPropagation(); const id = btn.dataset.delcat; const cat = state.categories.find(c => c.id === id); if(!cat) return; 
-        const childIds = getChildren(id).map(c => c.id); const allIds = [id, ...childIds]; 
-        if(!confirm(`Supprimer la catégorie "${cat.name}" ?`)) return; 
-        state.categories = state.categories.filter(c => !allIds.includes(c.id)); 
-        if (state.categories.length === 0) { state.categories.push({id: uid(), name: 'Général', color: colorForIndex(0), parentId: null, locked: false}); }
-        const fallbackId = state.categories[0].id;
-        state.items.forEach(it => { if(allIds.includes(it.categoryId)) it.categoryId = fallbackId; }); 
-        if(allIds.includes(activeCategoryFilter)) activeCategoryFilter = 'all'; 
-        saveState(); 
+        e.stopPropagation(); const id = btn.dataset.togglecat; 
+        if(localCollapsedCats.includes(id)) { localCollapsedCats = localCollapsedCats.filter(c => c !== id); } else { localCollapsedCats.push(id); } 
         render(); 
       }); 
     });
-    document.getElementById('addCatBtn').addEventListener('click', addCategory); document.getElementById('newCatInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') addCategory(); });
+    
+    if (ownerMode) {
+      el.querySelectorAll('[data-delcat]').forEach(btn => { 
+        btn.addEventListener('click', (e) => { 
+          e.stopPropagation(); const id = btn.dataset.delcat; const cat = state.categories.find(c => c.id === id); if(!cat) return; 
+          const childIds = getChildren(id).map(c => c.id); const allIds = [id, ...childIds]; 
+          if(!confirm(`Supprimer la catégorie "${cat.name}" ?`)) return; 
+          state.categories = state.categories.filter(c => !allIds.includes(c.id)); 
+          if (state.categories.length === 0) { state.categories.push({id: uid(), name: 'Général', color: colorForIndex(0), parentId: null, locked: false}); }
+          const fallbackId = state.categories[0].id;
+          state.items.forEach(it => { if(allIds.includes(it.categoryId)) it.categoryId = fallbackId; }); 
+          if(allIds.includes(activeCategoryFilter)) activeCategoryFilter = 'all'; 
+          saveState(); render(); 
+        }); 
+      });
+      document.getElementById('addCatBtn').addEventListener('click', addCategory); document.getElementById('newCatInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') addCategory(); });
+    }
   }
 
   function addCategory(){ 
+    if(!isOwner()) return;
     const input = document.getElementById('newCatInput'), parentSel = document.getElementById('newCatParent'), name = input.value.trim(); 
     if(!name) return; 
     const parentId = parentSel.value || null, id = uid(); 
     state.categories.push({id, name, color: colorForIndex(state.categories.length), parentId, locked:false}); 
-    input.value = ''; 
-    saveState(); 
-    render(); 
+    input.value = ''; saveState(); render(); 
   }
   
   function itemMatchesSearch(item, query){ if(!query) return true; return `${item.shop} ${item.note||''} ${item.size} ${(item.tags||[]).join(' ')}`.toLowerCase().includes(query.toLowerCase()); }
@@ -697,7 +807,11 @@
   function renderItemCard(item){
     const cat = findCategory(item.categoryId), style = AVAIL_STYLE[item.availability] || AVAIL_STYLE['Inconnue'];
     const photoHtml = `<div class="ph-placeholder" style="background:${cat.color}18">${iconHanger(cat.color)}</div>${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.shop)}" loading="lazy" onerror="this.style.display='none'">` : ''}`;
-    return `<div class="item-card"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(item.availability)}</span><div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="if(confirm('Supprimer ?')) window.deleteItem('${item.id}')">${iconTrash()}</button></div></div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div><a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
+    
+    // Les boutons d'édition n'apparaissent que si on est le propriétaire
+    const editBtns = isOwner() ? `<div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="if(confirm('Supprimer ?')) window.deleteItem('${item.id}')">${iconTrash()}</button></div>` : '';
+
+    return `<div class="item-card"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(item.availability)}</span>${editBtns}</div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div><a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
   }
   
   function itemsForCategoryId(catId, query){ return state.items.filter(i => i.categoryId === catId && itemMatchesSearch(i, query) && itemMatchesTags(i)); }
@@ -705,7 +819,7 @@
 
   function renderRacks(){
     const el = document.getElementById('racks'), query = document.getElementById('searchInput').value;
-    if(state.items.length === 0){ el.innerHTML = `<div class="global-empty"><strong>La liste est vide</strong>Ajoutez votre premier lien ci-dessus pour commencer.</div>`; return; }
+    if(state.items.length === 0){ el.innerHTML = `<div class="global-empty"><strong>La liste est vide</strong>${isOwner() ? 'Ajoutez votre premier lien ci-dessus pour commencer.' : 'Le propriétaire n\'a pas encore ajouté de vêtements.'}</div>`; return; }
     let html = '', anyVisible = false; const filterCat = activeCategoryFilter === 'all' ? null : state.categories.find(c => c.id === activeCategoryFilter);
     if(filterCat && filterCat.parentId){ const items = itemsForCategoryId(filterCat.id, query); anyVisible = items.length > 0; html += renderLeafSection(filterCat, items);
     } else {
@@ -745,7 +859,8 @@
   }
 
   document.querySelectorAll('.toggle-btn').forEach(btn => { btn.addEventListener('click', () => { chartMode = btn.dataset.chartmode; chartExcluded.clear(); document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn)); renderSummary(); }); });
-  function render(){ renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
+  function render(){ if(isOwner()) renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
+  
   loadState();
 </script>
 </body>
