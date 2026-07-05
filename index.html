@@ -20,13 +20,39 @@
     --shadow-sm:0 1px 3px rgba(20,22,31,0.06);
     --shadow-md:0 8px 24px rgba(20,22,31,0.08);
   }
-  *{box-sizing:border-box;} html,body{margin:0;padding:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); min-height:100vh; overflow-x: hidden;}
-  a{color:inherit;} button{font-family:inherit;cursor:pointer;} input,select{font-family:inherit;}
-  .page{max-width:1180px;margin:0 auto;padding:44px 24px 100px; position: relative;}
+  *{box-sizing:border-box;} 
   
-  .auth-bar { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px; z-index: 10; }
-  .auth-user { font-size: 13px; font-weight: 600; color: var(--muted); }
-  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(20,22,31,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  html,body{margin:0;padding:0; background:var(--bg); color:var(--ink); font-family:var(--font-body); height:100vh; overflow:hidden;}
+  a{color:inherit;} button{font-family:inherit;cursor:pointer;} input,select{font-family:inherit;}
+  
+  /* --- LAYOUT GLOBAL SPA --- */
+  .app-container { display:flex; height:100vh; width:100%; position:relative; }
+  
+  /* --- BARRE LATÉRALE --- */
+  /* Ajout d'un padding-top de 64px pour ne pas chevaucher le bouton Menu */
+  .sidebar { width:260px; background:var(--bg-alt); border-right:1px solid var(--line); display:flex; flex-direction:column; padding:64px 16px 24px; transition:transform 0.3s ease, width 0.3s ease; flex:none; z-index:50; overflow-y:auto; overflow-x:hidden;}
+  .sidebar.collapsed { transform:translateX(-100%); width:0; padding:0; border:none; margin:0; }
+  
+  .sidebar-header { font-family:var(--font-display); font-size:20px; font-weight:700; margin-bottom:24px; white-space:nowrap;}
+  .auth-bar { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; padding-bottom:24px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  .auth-user { font-size:13px; font-weight:600; color:var(--muted); text-overflow:ellipsis; overflow:hidden; }
+  
+  .sidebar-nav { flex:1; display:flex; flex-direction:column; gap:6px; white-space:nowrap;}
+  .sidebar-item { padding:10px 14px; border-radius:var(--radius-sm); font-size:13.5px; font-weight:500; cursor:pointer; transition:background 0.2s; display:flex; align-items:center; gap:10px; }
+  .sidebar-item:hover { background:rgba(20,22,31,0.04); }
+  .sidebar-item.active { background:var(--accent-soft); color:var(--accent-ink); font-weight:600; }
+  .sidebar-section-title { font-size:11px; text-transform:uppercase; color:var(--muted); margin:20px 0 8px 14px; font-family:var(--font-mono); }
+  
+  /* --- BOUTON TOGGLE MENU --- */
+  .sidebar-toggle-btn { position:fixed; top:16px; left:16px; z-index:100; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-sm); font-size:13px; color:var(--ink); transition:background 0.2s; }
+  .sidebar-toggle-btn:hover { background:var(--bg-alt); }
+  
+  /* --- CONTENU CENTRAL --- */
+  .main-content { flex:1; overflow-y:auto; position:relative; display:flex; flex-direction:column; align-items:center; padding-top:60px;}
+  .page { width:100%; max-width:1180px; padding:20px 24px 100px; position:relative; }
+
+  /* Modales et Bannières */
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(20,22,31,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
   .modal-overlay.open { display: flex; }
   .modal-card { background: var(--card); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow-md); position:relative; }
   .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; transition: color 0.2s;}
@@ -34,21 +60,16 @@
   .visitor-banner { background: var(--info-soft); color: var(--info); padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); margin-bottom: 24px; display: none; border: 1px solid rgba(47, 128, 237, 0.2);}
   .collab-banner { background: var(--ok-soft); color: #0B7A5A; padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); margin-bottom: 24px; display: none; border: 1px solid var(--ok);}
 
-  .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px; margin-top: 20px;}
+  /* Hero & Stats */
+  .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px;}
   .hero-eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:10px;}
   .hero-title{font-family:var(--font-display); font-weight:700; font-size:clamp(30px,4.4vw,44px); margin:0; line-height:1.05;}
-  .io-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap; align-items:center;}
   .hero-stats{display:flex; gap:24px;}
   .stat{background:var(--bg-alt); border-radius:var(--radius-md); padding:14px 20px; min-width:96px;}
   .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; display:block;}
   .stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;}
-  
-  .share-badge { background: var(--accent-soft); color: var(--accent-ink); padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--accent); cursor: pointer; transition: background 0.2s;}
-  .share-badge:hover { background: var(--accent); color: white; }
-  
-  .invite-badge { background: var(--ok-soft); color: #0B7A5A; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ok); cursor: pointer; transition: background 0.2s;}
-  .invite-badge:hover { background: var(--ok); color: white; }
 
+  /* Sections & Panels */
   .section-head{display:flex; align-items:center; gap:12px; margin:52px 0 20px;}
   .section-head .num{font-family:var(--font-mono); background:var(--ink); color:#fff; font-size:11px; padding:3px 8px; border-radius:20px; flex:none;}
   .section-head h2{font-family:var(--font-display); font-weight:600; font-size:20px; margin:0; flex:none;}
@@ -61,6 +82,8 @@
   .panel-content.collapsed { display: none; }
   .panel{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:26px; box-shadow:var(--shadow-sm);}
   .panel-body{display:grid; grid-template-columns:150px 1fr; gap:22px;}
+  
+  /* Form Elements */
   .preview-box{width:150px;height:180px; border-radius:var(--radius-md); background:var(--bg-alt); border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; flex:none;}
   .preview-box img{width:100%;height:100%;object-fit:cover;display:block;}
   .preview-placeholder{color:var(--muted-2);font-size:11px;text-align:center;padding:10px;line-height:1.5;}
@@ -72,11 +95,14 @@
   .field select{appearance:none;cursor:pointer;}
   .hint{font-size:12px; color:var(--muted-2); margin:14px 2px 0; line-height:1.5;}
   .panel-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px;}
+  
+  /* Buttons & Chips */
   .btn{border:none; border-radius:999px; padding:11px 22px; font-size:13.5px; font-weight:600; transition: background 0.2s, border-color 0.2s;}
   .btn-primary{background:var(--accent);color:#fff;} .btn-primary:hover{background:var(--accent-ink);}
   .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);} .btn-ghost:hover{color:var(--ink);border-color:var(--muted-2);}
   .btn-small{padding:7px 14px;font-size:12.5px;border-radius:999px;background:var(--bg-alt);color:var(--ink);border:1px solid var(--line);}
   .btn-small:hover{border-color:var(--accent);color:var(--accent);}
+  
   .cat-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 20px;}
   .chip{background:var(--bg-alt); border:1px solid var(--line); color:var(--ink); padding:8px 15px; border-radius:999px; font-size:13px; display:flex;align-items:center;gap:7px; transition:border-color 0.2s;}
   .chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
@@ -91,6 +117,8 @@
   .new-cat select, .new-cat input{background:#fff; border:1px dashed var(--muted-2); border-radius:999px; padding:8px 13px; font-size:12.5px; outline:none;}
   .new-cat button{background:var(--ink); border:none; color:#fff; border-radius:50%; width:32px;height:32px; font-size:17px;}
   .search-row{margin-bottom:10px;} .search-row input{width:100%;max-width:340px; background:var(--bg-alt); border:1px solid var(--line); padding:10px 15px; border-radius:999px; font-size:13px;}
+  
+  /* Cards Grid */
   .cat-section{margin-bottom:40px;}
   .cat-section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
   .cat-dot-big{width:10px;height:10px;border-radius:50%;flex:none;}
@@ -123,6 +151,8 @@
   .ic-link{display:block;margin-top:10px; text-align:center; font-size:12px;font-weight:600; color:var(--accent); text-decoration:none; padding-top:9px; border-top:1px solid var(--line);}
   .section-empty, .global-empty{text-align:center; padding:44px 20px; color:var(--muted); font-size:13.5px; border:1px dashed var(--line); border-radius:var(--radius-lg); background:var(--bg-alt);}
   .global-empty strong{display:block;font-family:var(--font-display);font-size:18px; margin-bottom:6px;color:var(--ink);font-weight:600;}
+  
+  /* Summary */
   .summary-grid{display:grid;grid-template-columns:260px 1fr;gap:22px;}
   .total-card{background:var(--ink); color:#fff; border-radius:var(--radius-lg); padding:26px; display:flex;flex-direction:column;justify-content:center;}
   .total-label{font-family:var(--font-mono);font-size:11px;color:#9EA1FF;margin-bottom:8px; text-transform:uppercase;}
@@ -147,6 +177,8 @@
   .legend-label{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .legend-pct{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);}
   .legend-value{font-family:var(--font-mono);font-size:12.5px;font-weight:700;min-width:64px;text-align:right;}
+  
+  /* Tags */
   .tag-input-box{display:flex;flex-wrap:wrap;gap:7px;align-items:center; background:var(--bg-alt); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 10px; position:relative;}
   .tag-suggestions{position:absolute; top:calc(100% + 6px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:var(--radius-sm); box-shadow:var(--shadow-md); max-height:180px; overflow-y:auto; z-index:20; display:none;}
   .tag-suggestions.open{display:block;}
@@ -166,10 +198,15 @@
   .chip-tag .dot{width:6px;height:6px;border-radius:50%;flex:none;}
   .ic-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
   .ic-tag{font-size:10.5px;font-weight:600;color:#fff; padding:2px 8px;border-radius:999px;}
+  
   footer{margin-top:70px;text-align:center;font-size:12px;color:var(--muted-2);line-height:1.6;}
+  
+  /* Responsive */
   @media (max-width: 900px) { .field-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 768px) {
-    .page { padding: 64px 16px 80px; }
+    .sidebar { position:absolute; left:0; top:0; height:100%; box-shadow:var(--shadow-md); transform:translateX(-100%); width:260px; padding:64px 16px 24px;}
+    .sidebar.open { transform:translateX(0); }
+    
     .hero { flex-direction: column; align-items: flex-start; gap: 20px; }
     .hero-stats { width: 100%; justify-content: space-between; gap: 10px; }
     .stat { flex: 1; min-width: 30%; padding: 12px; text-align: center; }
@@ -188,17 +225,178 @@
     .new-cat button { align-self: flex-end; }
   }
   @media (max-width: 480px) {
-    .io-actions { flex-direction: column; width: 100%; }
-    .io-actions button, .io-actions label { width: 100%; text-align: center; justify-content: center; }
     .chart-card-head { flex-direction: column; align-items: center; }
   }
 </style>
 </head>
 <body>
 
-<!-- BARRE D'AUTHENTIFICATION -->
-<div class="auth-bar" id="authBar">
-  <!-- Rempli dynamiquement par JS -->
+<!-- BOUTON TOGGLE MENU (Fixe en haut à gauche) -->
+<button class="sidebar-toggle-btn" onclick="toggleSidebar()">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  Menu
+</button>
+
+<div class="app-container">
+  
+  <!-- BARRE LATÉRALE -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">Mes Wishlists</div>
+    
+    <!-- Zone Authentification -->
+    <div class="auth-bar" id="authBar">
+      <!-- Rempli dynamiquement par JS -->
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; margin-bottom:20px; flex:none;" onclick="createNewWishlist()">+ Nouvelle Liste</button>
+
+    <div class="sidebar-nav">
+      <div class="sidebar-item active" id="nav-dashboard" onclick="showDashboard()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Tableau de bord
+      </div>
+      
+      <!-- Actions spécifiques à la liste en cours -->
+      <div id="listActions" style="display:none; margin-top:10px;">
+        <div class="sidebar-section-title">Actions de la liste</div>
+        <div class="sidebar-item" onclick="partagerListe()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          Partager la liste
+        </div>
+        <div class="sidebar-item" id="inviteBtn" onclick="inviterAmi()" style="display:none; color:#0B7A5A;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          Inviter un collaborateur
+        </div>
+      </div>
+
+      <div class="sidebar-section-title">Mes Listes Cloud</div>
+      <div id="userListsContainer" style="display:flex; flex-direction:column; gap:6px;">
+        <!-- Rempli par JS avec fetchUserLists() -->
+        <div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENU CENTRAL -->
+  <main class="main-content">
+    
+    <!-- VUE 1 : TABLEAU DE BORD (Centré horizontalement et verticalement) -->
+    <div class="page" id="dashboardView" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:calc(100vh - 120px); padding-bottom:0;">
+      <h1 class="hero-title" style="margin-bottom: 10px;">Bienvenue sur ton espace</h1>
+      <p style="color:var(--muted); margin:0;">Sélectionne une liste dans le menu de gauche ou crées-en une nouvelle.</p>
+    </div>
+
+    <!-- VUE 2 : LA LISTE DE VÊTEMENTS -->
+    <div class="page" id="mainPageContent" style="display:none;">
+      
+      <div id="visitorBanner" class="visitor-banner">
+        👀 Mode Lecture Seule : Vous regardez la liste de quelqu'un d'autre.
+      </div>
+      <div id="collabBanner" class="collab-banner">
+        🤝 Mode Collaboratif : Vous pouvez ajouter des vêtements à cette liste.
+      </div>
+
+      <div class="hero">
+        <div>
+          <span class="hero-eyebrow">Wishlist Partagée</span>
+          <h1 class="hero-title">Ma liste de<br>vêtements</h1>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-value" id="statCount">0</span><span class="stat-label">Articles</span></div>
+          <div class="stat"><span class="stat-value" id="statShops">0</span><span class="stat-label">Boutiques</span></div>
+          <div class="stat"><span class="stat-value" id="statTotal">0 €</span><span class="stat-label">Total</span></div>
+        </div>
+      </div>
+
+      <!-- SECTION AJOUT PROTEGÉE -->
+      <div id="ownerAddSection" style="display:none;">
+        <div class="section-head collapsible-head" onclick="window.togglePanel('addArticlePanel', 'addArticleIcon')">
+          <span class="num owner-num">01</span>
+          <h2>Ajouter un article</h2>
+          <svg id="addArticleIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <div class="line"></div>
+        </div>
+
+        <div class="panel panel-content" id="addArticlePanel">
+          <div class="panel-body">
+            <div class="preview-box" id="previewBox">
+              <span class="preview-placeholder" id="previewPlaceholder">La photo apparaîtra ici une fois le lien collé</span>
+            </div>
+            <div style="flex:1;">
+              <div class="field" style="margin-bottom:14px;">
+                <label class="field-title" for="f-url">Lien du vêtement</label>
+                <input id="f-url" type="url" placeholder="https://www.laboutique.com/produit...">
+              </div>
+              <div class="field-grid">
+                <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
+                <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
+                <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
+                <div class="field">
+                  <label class="field-title">Disponibilité</label>
+                  <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer; color:var(--ink); font-weight:normal; font-size:13.5px;">
+                    <input type="checkbox" id="f-avail-rupture" style="width:18px; height:18px; accent-color:var(--ink); cursor:pointer;">
+                    Rupture de stock
+                  </label>
+                </div>
+                <div class="field"><label class="field-title" for="f-cat">Catégorie</label><select id="f-cat"></select></div>
+              </div>
+              <div class="field" style="margin-top:14px;"><label class="field-title" for="f-note">Repère (optionnel)</label><input id="f-note" type="text" placeholder="Ex : pull col rond bleu marine"></div>
+              <div class="field" style="margin-top:14px;">
+                <label class="field-title" for="f-tags-input">Étiquettes (couleur, boutique, occasion...)</label>
+                <div class="tag-input-box" id="tagInputBox">
+                  <input type="color" id="f-tag-color" value="#D6409F" title="Couleur de l'étiquette">
+                  <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée" autocomplete="off">
+                  <div class="tag-suggestions" id="tagSuggestions"></div>
+                </div>
+              </div>
+              <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main.</p>
+              <div class="field" id="manualImgField" style="margin-top:10px;"><label class="field-title" for="f-image">URL de l'image manuelle</label><input id="f-image" type="url" placeholder="https://.../photo.jpg"></div>
+              <div class="panel-actions">
+                <button class="btn btn-ghost" id="cancelEdit" style="display:none;">Annuler</button>
+                <button class="btn btn-primary" id="submitBtn">Ajouter à la liste</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head collapsible-head" onclick="window.togglePanel('filtersPanel', 'filtersIcon')">
+        <span class="num owner-num-mid">02</span>
+        <h2>Catégories & Filtres</h2>
+        <svg id="filtersIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <div class="line"></div>
+      </div>
+      
+      <div class="panel-content" id="filtersPanel">
+        <div class="search-row"><input id="searchInput" type="text" placeholder="Filtrer par boutique, repère, taille ou étiquette..."></div>
+        <div class="cat-toolbar" id="catToolbar"></div>
+        <div class="tag-toolbar" id="tagToolbar"></div>
+      </div>
+
+      <div id="racks"></div>
+
+      <div class="section-head"><span class="num owner-num-last">03</span><h2>Résumé</h2><div class="line"></div></div>
+      <div class="summary-grid">
+        <div class="total-card">
+          <div class="total-label">Total de la liste</div>
+          <div class="total-value" id="totalValue">0 €</div>
+          <div class="total-sub" id="totalSub">0 article</div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-head">
+            <h4 id="chartTitle">Prix par boutique</h4>
+            <div class="chart-toggle">
+              <button class="toggle-btn active" id="chartModeShop" data-chartmode="shop">Boutique</button>
+              <button class="toggle-btn" id="chartModeCategory" data-chartmode="category">Catégorie</button>
+              <button class="toggle-btn" id="chartModeTag" data-chartmode="tag">Étiquette</button>
+            </div>
+          </div>
+          <div class="donut-wrap" id="shopChart"></div>
+        </div>
+      </div>
+      <footer>Les données sont sauvegardées en temps réel sur le cloud (Firebase).</footer>
+    </div>
+  </main>
 </div>
 
 <!-- MODALE D'AUTHENTIFICATION -->
@@ -234,132 +432,24 @@
   </div>
 </div>
 
-<div class="page" id="mainPageContent">
-  
-  <div id="visitorBanner" class="visitor-banner">
-    👀 Mode Lecture Seule : Vous regardez la liste de quelqu'un d'autre.
-  </div>
-  
-  <div id="collabBanner" class="collab-banner">
-    🤝 Mode Collaboratif : Vous pouvez ajouter des vêtements à cette liste.
-  </div>
-
-  <div class="hero">
-    <div>
-      <span class="hero-eyebrow">Wishlist Partagée</span>
-      <h1 class="hero-title">Ma liste de<br>vêtements</h1>
-      <div class="io-actions">
-        <button class="share-badge" id="shareBtn" onclick="partagerListe()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-          Partager cette liste
-        </button>
-        
-        <button class="invite-badge" id="inviteBtn" onclick="inviterAmi()" style="display:none;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-          Inviter un collaborateur
-        </button>
-      </div>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><span class="stat-value" id="statCount">0</span><span class="stat-label">Articles</span></div>
-      <div class="stat"><span class="stat-value" id="statShops">0</span><span class="stat-label">Boutiques</span></div>
-      <div class="stat"><span class="stat-value" id="statTotal">0 €</span><span class="stat-label">Total</span></div>
-    </div>
-  </div>
-
-  <!-- SECTION AJOUT PROTEGÉE -->
-  <div id="ownerAddSection" style="display:none;">
-    <div class="section-head collapsible-head" onclick="window.togglePanel('addArticlePanel', 'addArticleIcon')">
-      <span class="num owner-num">01</span>
-      <h2>Ajouter un article</h2>
-      <svg id="addArticleIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      <div class="line"></div>
-    </div>
-
-    <div class="panel panel-content" id="addArticlePanel">
-      <div class="panel-body">
-        <div class="preview-box" id="previewBox">
-          <span class="preview-placeholder" id="previewPlaceholder">La photo apparaîtra ici une fois le lien collé</span>
-        </div>
-        <div style="flex:1;">
-          <div class="field" style="margin-bottom:14px;">
-            <label class="field-title" for="f-url">Lien du vêtement</label>
-            <input id="f-url" type="url" placeholder="https://www.laboutique.com/produit...">
-          </div>
-          <div class="field-grid">
-            <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
-            <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
-            <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
-            <div class="field">
-              <label class="field-title">Disponibilité</label>
-              <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; color: var(--ink); font-weight: normal; font-size: 13.5px;">
-                <input type="checkbox" id="f-avail-rupture" style="width: 18px; height: 18px; accent-color: var(--ink); cursor: pointer;">
-                Rupture de stock
-              </label>
-            </div>
-            <div class="field"><label class="field-title" for="f-cat">Catégorie</label><select id="f-cat"></select></div>
-          </div>
-          <div class="field" style="margin-top:14px;"><label class="field-title" for="f-note">Repère (optionnel)</label><input id="f-note" type="text" placeholder="Ex : pull col rond bleu marine"></div>
-          <div class="field" style="margin-top:14px;">
-            <label class="field-title" for="f-tags-input">Étiquettes (couleur, boutique, occasion...)</label>
-            <div class="tag-input-box" id="tagInputBox">
-              <input type="color" id="f-tag-color" value="#D6409F" title="Couleur de l'étiquette">
-              <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée" autocomplete="off">
-              <div class="tag-suggestions" id="tagSuggestions"></div>
-            </div>
-          </div>
-          <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main.</p>
-          <div class="field" id="manualImgField" style="margin-top:10px;"><label class="field-title" for="f-image">URL de l'image manuelle</label><input id="f-image" type="url" placeholder="https://.../photo.jpg"></div>
-          <div class="panel-actions">
-            <button class="btn btn-ghost" id="cancelEdit" style="display:none;">Annuler</button>
-            <button class="btn btn-primary" id="submitBtn">Ajouter à la liste</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-head collapsible-head" onclick="window.togglePanel('filtersPanel', 'filtersIcon')">
-    <span class="num owner-num-mid">02</span>
-    <h2>Catégories & Filtres</h2>
-    <svg id="filtersIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-    <div class="line"></div>
-  </div>
-  
-  <div class="panel-content" id="filtersPanel">
-    <div class="search-row"><input id="searchInput" type="text" placeholder="Filtrer par boutique, repère, taille ou étiquette..."></div>
-    <div class="cat-toolbar" id="catToolbar"></div>
-    <div class="tag-toolbar" id="tagToolbar"></div>
-  </div>
-
-  <div id="racks"></div>
-
-  <div class="section-head"><span class="num owner-num-last">03</span><h2>Résumé</h2><div class="line"></div></div>
-  <div class="summary-grid">
-    <div class="total-card">
-      <div class="total-label">Total de la liste</div>
-      <div class="total-value" id="totalValue">0 €</div>
-      <div class="total-sub" id="totalSub">0 article</div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-card-head">
-        <h4 id="chartTitle">Prix par boutique</h4>
-        <div class="chart-toggle">
-          <button class="toggle-btn active" id="chartModeShop" data-chartmode="shop">Boutique</button>
-          <button class="toggle-btn" id="chartModeCategory" data-chartmode="category">Catégorie</button>
-          <button class="toggle-btn" id="chartModeTag" data-chartmode="tag">Étiquette</button>
-        </div>
-      </div>
-      <div class="donut-wrap" id="shopChart"></div>
-    </div>
-  </div>
-  <footer>Les données sont sauvegardées en temps réel sur le cloud (Firebase).</footer>
-</div>
-
 <script>
+  let currentListId = null;
+
+  function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    if (window.innerWidth <= 768) {
+      sb.classList.toggle('open');
+      sb.classList.remove('collapsed');
+    } else {
+      sb.classList.toggle('collapsed');
+      sb.classList.remove('open');
+    }
+  }
+
   function partagerListe() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete('invite'); 
+    if(!currentListId) return;
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('liste', currentListId);
     const cleanUrl = url.toString();
     
     if (navigator.share) {
@@ -376,7 +466,9 @@
   }
 
   function inviterAmi() {
-    const url = new URL(window.location.href);
+    if(!currentListId) return;
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('liste', currentListId);
     url.searchParams.set('invite', 'true'); 
     const inviteUrl = url.toString();
     
@@ -396,7 +488,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, onSnapshot, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
@@ -414,12 +506,6 @@
   const auth = getAuth(app);
 
   const BACKEND_URL = "https://scraper-wishlist.onrender.com";
-
-  let listId = new URLSearchParams(window.location.search).get('liste');
-  if (!listId) {
-    listId = Math.random().toString(36).substring(2, 8);
-    window.history.replaceState(null, '', '?liste=' + listId);
-  }
 
   // --- LOGIQUE AUTHENTIFICATION ---
   let currentUser = null;
@@ -460,32 +546,22 @@
     const errEl = document.getElementById('authError');
     errEl.style.display = 'none';
 
-    if(!email || !password) {
-      errEl.innerText = "Veuillez remplir tous les champs.";
-      errEl.style.display = 'block';
-      return;
-    }
+    if(!email || !password) { errEl.innerText = "Veuillez remplir tous les champs."; errEl.style.display = 'block'; return; }
 
     try {
-      if(authMode === 'login') {
-        await signInWithEmailAndPassword(auth, email, password);
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-      }
+      if(authMode === 'login') await signInWithEmailAndPassword(auth, email, password);
+      else await createUserWithEmailAndPassword(auth, email, password);
       window.closeAuthModal();
     } catch(error) {
       let msg = "Une erreur est survenue.";
       if(error.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
       if(error.code === 'auth/email-already-in-use') msg = "Cet email est déjà utilisé.";
       if(error.code === 'auth/weak-password') msg = "Le mot de passe doit faire au moins 6 caractères.";
-      errEl.innerText = msg;
-      errEl.style.display = 'block';
+      errEl.innerText = msg; errEl.style.display = 'block';
     }
   });
 
-  window.logout = function() {
-    signOut(auth);
-  }
+  window.logout = function() { signOut(auth); }
 
   window.loginWithGoogle = async function() {
     const provider = new GoogleAuthProvider();
@@ -495,28 +571,105 @@
       await signInWithPopup(auth, provider);
       window.closeAuthModal();
     } catch(error) {
-      if(error.code !== 'auth/popup-closed-by-user') {
-        errEl.innerText = "Erreur avec Google : " + error.message;
-        errEl.style.display = 'block';
-      }
+      if(error.code !== 'auth/popup-closed-by-user') { errEl.innerText = "Erreur Google : " + error.message; errEl.style.display = 'block'; }
     }
   }
 
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     const authBar = document.getElementById('authBar');
     if(user) {
-      authBar.innerHTML = `<span class="auth-user">${user.email || user.displayName || 'Utilisateur'}</span><button class="btn btn-small" onclick="window.logout()">Déconnexion</button>`;
+      authBar.innerHTML = `<span class="auth-user" title="${user.email}">${user.email || 'Utilisateur'}</span><button class="btn btn-small" onclick="window.logout()" style="margin-top:8px;">Déconnexion</button>`;
     } else {
-      authBar.innerHTML = `<button class="btn btn-small" onclick="window.openAuthModal('login')">Se connecter</button>`;
+      authBar.innerHTML = `<button class="btn btn-primary" onclick="window.openAuthModal('login')">Se connecter</button>`;
     }
+    await updateSidebarLists();
     checkOwnershipAndRender();
   });
-  // ---------------------------------
 
+  // --- LOGIQUE MULTI-VUES (SPA) ---
+  window.showDashboard = function() {
+    currentListId = null;
+    document.getElementById('dashboardView').style.display = 'flex'; // remis en flex pour le centrage
+    document.getElementById('mainPageContent').style.display = 'none';
+    document.getElementById('listActions').style.display = 'none';
+    
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('nav-dashboard').classList.add('active');
+    
+    window.history.pushState({}, '', window.location.pathname);
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  window.showList = function(idParam) {
+    currentListId = idParam;
+    document.getElementById('dashboardView').style.display = 'none';
+    document.getElementById('mainPageContent').style.display = 'block';
+    document.getElementById('listActions').style.display = 'block';
+    
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    const navItem = document.getElementById('nav-list-' + idParam);
+    if(navItem) navItem.classList.add('active');
+    
+    window.history.pushState({}, '', '?liste=' + currentListId);
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+    resetForm();
+    loadState(currentListId);
+  }
+
+  window.createNewWishlist = function() {
+    if(!currentUser) { window.openAuthModal('signup'); return; }
+    const newListId = Math.random().toString(36).substring(2, 8);
+    window.showList(newListId);
+  }
+
+  // --- MEMOIRE DES LISTES (FIRESTORE QUERIES) ---
+  async function fetchUserLists(uid) {
+    const listsRef = collection(db, "wishlists");
+    const userLists = [];
+    try {
+      const qOwner = query(listsRef, where("ownerId", "==", uid));
+      const ownerSnap = await getDocs(qOwner);
+      ownerSnap.forEach(doc => userLists.push({ id: doc.id, role: 'owner', ...doc.data() }));
+
+      const qCollab = query(listsRef, where("collaborators", "array-contains", uid));
+      const collabSnap = await getDocs(qCollab);
+      collabSnap.forEach(doc => userLists.push({ id: doc.id, role: 'collab', ...doc.data() }));
+
+      return userLists;
+    } catch (error) { console.error(error); return []; }
+  }
+
+  async function updateSidebarLists() {
+    const container = document.getElementById('userListsContainer');
+    if (!currentUser) { container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>`; return; }
+
+    container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px;">Chargement...</div>`;
+    const lists = await fetchUserLists(currentUser.uid);
+
+    if (lists.length === 0) { container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Aucune liste pour le moment.</div>`; return; }
+
+    let html = '';
+    lists.forEach(list => {
+      const itemCount = list.items ? list.items.length : 0;
+      const isOwner = list.role === 'owner';
+      const icon = isOwner ? '👤' : '🤝';
+      const label = isOwner ? `Ma liste (${list.id.slice(0,4)})` : `Partagée (${list.id.slice(0,4)})`;
+      
+      html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="showList('${list.id}')">${icon} ${label} <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
+    });
+    container.innerHTML = html;
+    
+    if(currentListId) {
+      const activeNav = document.getElementById('nav-list-' + currentListId);
+      if(activeNav) activeNav.classList.add('active');
+    }
+  }
+
+
+  // --- LOGIQUE DE L'APPLICATION LISTE ---
   window.togglePanel = function(panelId, iconId) {
-    const panel = document.getElementById(panelId);
-    const icon = document.getElementById(iconId);
+    const panel = document.getElementById(panelId); const icon = document.getElementById(iconId);
     if (panel.classList.contains('collapsed')) { panel.classList.remove('collapsed'); icon.classList.remove('rotated'); } 
     else { panel.classList.add('collapsed'); icon.classList.add('rotated'); }
   };
@@ -531,14 +684,13 @@
     {id:'chaussures', name:'Chaussures', parentId:null}, {id:'accessoires', name:'Accessoires', parentId:null}
   ].map((c, i) => ({ ...c, color: colorForIndex(i), locked: false }));
 
-  function defaultCollapsedCats(categories){
-    return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id);
-  }
+  function defaultCollapsedCats(categories){ return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id); }
 
   let state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
   let localCollapsedCats = []; 
   let hasInitCats = false;
   let isStateLoaded = false;
+  let unsubscribeSnapshot = null;
 
   let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0;
   let chartExcluded = new Set(); 
@@ -552,56 +704,40 @@
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
   function iconHanger(color){ return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6"><circle cx="12" cy="4" r="1.6"/><path d="M12 6v2"/><path d="M2 20l8.5-6a2 2 0 012.9 0L22 20"/><path d="M2 20h20"/></svg>`; }
 
-  // --- NOUVELLE LOGIQUE DE DROITS ---
   function isOwner() { return state.ownerId && currentUser && currentUser.uid === state.ownerId; }
   function isCollaborator() { return currentUser && state.collaborators && state.collaborators.includes(currentUser.uid); }
   function canEdit() { return (!state.ownerId) || isOwner() || isCollaborator(); }
 
   function checkOwnershipAndRender() {
-    if (!isStateLoaded) return; 
+    if (!isStateLoaded || !currentListId) return; 
     
-    // 1. Initialisation d'une nouvelle liste
     if (!state.ownerId && state.items.length === 0) {
-      if (currentUser) {
-        state.ownerId = currentUser.uid;
-        saveState(); 
-      } else {
+      if (currentUser) { state.ownerId = currentUser.uid; saveState(); updateSidebarLists(); } 
+      else {
         document.getElementById('racks').innerHTML = `<div class="global-empty"><strong>Création de liste</strong><p style="margin-bottom:16px;">Veuillez vous connecter ou créer un compte gratuit pour créer et conserver cette liste.</p><button class="btn btn-primary" onclick="window.openAuthModal('signup')">Créer mon compte</button></div>`;
         document.getElementById('ownerAddSection').style.display = 'none';
         document.getElementById('visitorBanner').style.display = 'none';
         document.getElementById('collabBanner').style.display = 'none';
         document.getElementById('inviteBtn').style.display = 'none';
-        
         window.openAuthModal('signup');
         return; 
       }
     }
 
-    // 2. Traitement du lien d'invitation
     const urlParams = new URLSearchParams(window.location.search);
     if (currentUser && urlParams.get('invite') === 'true') {
-      if (state.ownerId && state.ownerId !== currentUser.uid) {
-        if (!state.collaborators.includes(currentUser.uid)) {
-          state.collaborators.push(currentUser.uid);
-          saveState(); // C'est ici que les nouvelles règles Firestore entrent en jeu
-        }
+      if (state.ownerId && state.ownerId !== currentUser.uid && !state.collaborators.includes(currentUser.uid)) {
+        state.collaborators.push(currentUser.uid); saveState(); updateSidebarLists();
       }
-      // On nettoie l'URL pour faire disparaître le "?invite=true"
-      const url = new URL(window.location.href);
-      url.searchParams.delete('invite');
-      window.history.replaceState(null, '', url.toString());
+      const url = new URL(window.location.href); url.searchParams.delete('invite'); window.history.replaceState(null, '', url.toString());
     }
 
-    const editMode = canEdit();
-    const ownerMode = isOwner();
-    const collabMode = isCollaborator();
+    const editMode = canEdit(); const ownerMode = isOwner(); const collabMode = isCollaborator();
 
     document.getElementById('ownerAddSection').style.display = editMode ? 'block' : 'none';
     document.getElementById('visitorBanner').style.display = (!editMode && state.ownerId) ? 'block' : 'none';
     document.getElementById('collabBanner').style.display = collabMode ? 'block' : 'none';
-    
-    // Seul le propriétaire peut inviter d'autres personnes
-    document.getElementById('inviteBtn').style.display = ownerMode ? 'inline-flex' : 'none';
+    document.getElementById('inviteBtn').style.display = ownerMode ? 'flex' : 'none';
     
     document.querySelector('.owner-num').textContent = editMode ? "01" : "";
     document.querySelector('.owner-num-mid').textContent = editMode ? "02" : "01";
@@ -609,31 +745,26 @@
 
     render();
   }
-  // --------------------------------
 
-  function loadState(){
-    onSnapshot(doc(db, "wishlists", listId), (docSnap) => {
+  function loadState(idToLoad){
+    if(unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    isStateLoaded = false;
+    
+    unsubscribeSnapshot = onSnapshot(doc(db, "wishlists", idToLoad), (docSnap) => {
       isStateLoaded = true;
       if (docSnap.exists()) { state = docSnap.data(); } 
       else { state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
       
       if(!state.tagColors) state.tagColors = {};
-      if(!state.collaborators) state.collaborators = []; // Sécurité
+      if(!state.collaborators) state.collaborators = []; 
       
       ensureDefaultCategories(); 
-      
-      if(!hasInitCats) {
-        localCollapsedCats = defaultCollapsedCats(state.categories);
-        hasInitCats = true;
-      }
+      if(!hasInitCats) { localCollapsedCats = defaultCollapsedCats(state.categories); hasInitCats = true; }
       checkOwnershipAndRender();
     });
   }
 
-  function saveState(){ 
-    if (!canEdit()) return; 
-    setDoc(doc(db, "wishlists", listId), state).catch(e => console.error("Erreur Firebase:", e)); 
-  }
+  function saveState(){ if (!canEdit() || !currentListId) return; setDoc(doc(db, "wishlists", currentListId), state).catch(e => console.error("Erreur Firebase:", e)); }
   
   function guessShopFromUrl(url){ try{ const u = new URL(url); let host = u.hostname.replace(/^www\./,''); const parts = host.split('.'); return (parts.length > 2 ? parts[parts.length-2] : parts[0]).replace(/^\w/, c => c.toUpperCase()); }catch(e){ return ''; } }
   function getTopLevelCategories(){ return state.categories.filter(c => !c.parentId); }
@@ -642,56 +773,34 @@
   function ensureDefaultCategories(){ DEFAULT_CATEGORIES.forEach(dc => { if(!state.categories.find(c => c.id === dc.id)) state.categories.push({...dc}); }); }
 
   async function fetchPreview(url) {
-    const token = ++fetchToken;
-    const box = document.getElementById('previewBox');
-    
-    box.innerHTML = `<div style="text-align:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg><br><span style="font-size:10px;color:var(--muted);display:block;margin-top:8px;">Scraping en cours...</span></div>
-    <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>`;
-    
+    const token = ++fetchToken; const box = document.getElementById('previewBox');
+    box.innerHTML = `<div style="text-align:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg><br><span style="font-size:10px;color:var(--muted);display:block;margin-top:8px;">Scraping...</span></div><style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>`;
     fetchedImage = null;
     try {
       const res = await fetch(`${BACKEND_URL}/api/scrape?url=${encodeURIComponent(url)}`);
-      if (!res.ok) throw new Error('Erreur backend de scraping');
-      
+      if (!res.ok) throw new Error('Erreur backend');
       const itemData = await res.json();
       if (token !== fetchToken) return;
 
       if (itemData) {
         if (itemData.image) { fetchedImage = itemData.image; box.innerHTML = `<img src="${escapeHtml(itemData.image)}" alt="Aperçu"><span class="preview-status">Photo trouvée ✓</span>`; } 
         else { box.innerHTML = `<span class="preview-placeholder">Pas de photo trouvée</span>`; }
-
-        const shopField = document.getElementById('f-shop');
-        if (!shopField.dataset.touched && itemData.shop) { shopField.value = itemData.shop; }
-
-        const noteField = document.getElementById('f-note');
-        if (!noteField.value && itemData.title) { noteField.value = itemData.title.slice(0, 80); }
-
+        const shopField = document.getElementById('f-shop'); if (!shopField.dataset.touched && itemData.shop) shopField.value = itemData.shop;
+        const noteField = document.getElementById('f-note'); if (!noteField.value && itemData.title) noteField.value = itemData.title.slice(0, 80);
         const priceField = document.getElementById('f-price'); const priceHint = document.getElementById('priceHint');
         if (!priceField.dataset.touched) {
-          if (typeof itemData.price === 'number') {
-            priceField.value = itemData.price;
-            if (priceHint) {
-              if (itemData.price_confidence === 'low') { priceHint.textContent = '⚠️ Prix estimé, vérifiez-le'; priceHint.style.display = 'block'; } 
-              else { priceHint.style.display = 'none'; }
-            }
-          } else if (priceHint) { priceHint.textContent = 'ℹ️ Prix non détecté, entrez-le manuellement'; priceHint.style.display = 'block'; }
+          if (typeof itemData.price === 'number') { priceField.value = itemData.price; if (priceHint) { if (itemData.price_confidence === 'low') { priceHint.textContent = '⚠️ Prix estimé'; priceHint.style.display = 'block'; } else { priceHint.style.display = 'none'; } } } 
+          else if (priceHint) { priceHint.textContent = 'ℹ️ Prix non détecté'; priceHint.style.display = 'block'; }
         }
-
-        const availCheckbox = document.getElementById('f-avail-rupture');
-        if (!availCheckbox.dataset.touched && itemData.availability === 'outofstock') { availCheckbox.checked = true; }
-      } else { throw new Error(itemData.error || 'Données incomplètes'); }
-    } catch(e) {
-      if (token !== fetchToken) return;
-      box.innerHTML = `<span class="preview-placeholder" style="color:var(--bad);">Échec du scraping. Entrez les infos manuellement.</span>`;
-    }
+        const availCheckbox = document.getElementById('f-avail-rupture'); if (!availCheckbox.dataset.touched && itemData.availability === 'outofstock') availCheckbox.checked = true;
+      } else throw new Error(itemData.error);
+    } catch(e) { if (token !== fetchToken) return; box.innerHTML = `<span class="preview-placeholder" style="color:var(--bad);">Échec du scraping.</span>`; }
   }
 
   let urlDebounce;
   document.getElementById('f-url').addEventListener('input', (e) => {
-    const shopField = document.getElementById('f-shop');
-    if(!shopField.dataset.touched){ const guess = guessShopFromUrl(e.target.value); if(guess) shopField.value = guess; }
-    clearTimeout(urlDebounce);
-    const val = e.target.value.trim();
+    const shopField = document.getElementById('f-shop'); if(!shopField.dataset.touched){ const guess = guessShopFromUrl(e.target.value); if(guess) shopField.value = guess; }
+    clearTimeout(urlDebounce); const val = e.target.value.trim();
     if(!val){ document.getElementById('previewBox').innerHTML = `<span class="preview-placeholder">La photo apparaîtra ici une fois le lien collé</span>`; fetchedImage = null; return; }
     urlDebounce = setTimeout(() => { try{ new URL(val); fetchPreview(val); }catch(e){} }, 700);
   });
@@ -716,8 +825,7 @@
     const input = document.getElementById('f-tags-input'); const colorInput = document.getElementById('f-tag-color');
     const val = input.value.trim().replace(/,$/, ''); 
     if(val){ 
-      if(!state.tagColors) state.tagColors = {};
-      if(!state.tagColors[val]) state.tagColors[val] = colorInput.value;
+      if(!state.tagColors) state.tagColors = {}; if(!state.tagColors[val]) state.tagColors[val] = colorInput.value;
       if(!currentTags.includes(val)) currentTags.push(val); 
       saveState(); renderTagInputChips(); 
     } 
@@ -725,33 +833,25 @@
   }
 
   function hideTagSuggestions(){ const box = document.getElementById('tagSuggestions'); box.innerHTML = ''; box.classList.remove('open'); }
-
   function renderTagSuggestions(){
     const input = document.getElementById('f-tags-input'); const box = document.getElementById('tagSuggestions'); const query = input.value.trim().toLowerCase();
     if(!query){ hideTagSuggestions(); return; }
     const allKnownTags = [...new Set([...Object.keys(state.tagColors || {}), ...state.items.flatMap(i => i.tags || [])])];
     const matches = allKnownTags.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
     if(matches.length === 0){ hideTagSuggestions(); return; }
-    box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join('');
-    box.classList.add('open');
+    box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join(''); box.classList.add('open');
     box.querySelectorAll('[data-suggest]').forEach(el => { el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); }); });
   }
 
-  function applyTagSuggestion(tag){
-    if(!currentTags.includes(tag)) currentTags.push(tag);
-    const input = document.getElementById('f-tags-input'); input.value = ''; input.focus();
-    hideTagSuggestions(); saveState(); renderTagInputChips();
-  }
+  function applyTagSuggestion(tag){ if(!currentTags.includes(tag)) currentTags.push(tag); const input = document.getElementById('f-tags-input'); input.value = ''; input.focus(); hideTagSuggestions(); saveState(); renderTagInputChips(); }
 
-  document.getElementById('f-tags-input').addEventListener('input', renderTagSuggestions);
-  document.getElementById('f-tags-input').addEventListener('focus', renderTagSuggestions);
-  document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); });
-  document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
+  document.getElementById('f-tags-input').addEventListener('input', renderTagSuggestions); document.getElementById('f-tags-input').addEventListener('focus', renderTagSuggestions);
+  document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
   document.getElementById('f-tags-input').addEventListener('blur', () => { setTimeout(hideTagSuggestions, 150); });
 
   function renderCategorySelect(){
     const sel = document.getElementById('f-cat'); let html = '';
-    if (state.categories.length === 0) { html = `<option value="">Aucune catégorie disponible</option>`; } 
+    if (state.categories.length === 0) { html = `<option value="">Aucune catégorie</option>`; } 
     else { getTopLevelCategories().forEach(top => { const children = getChildren(top.id); if(children.length){ html += `<optgroup label="${escapeHtml(top.name)}"><option value="${top.id}">${escapeHtml(top.name)} (général)</option>${children.map(c => `<option value="${c.id}">— ${escapeHtml(c.name)}</option>`).join('')}</optgroup>`; } else { html += `<option value="${top.id}">${escapeHtml(top.name)}</option>`; } }); }
     sel.innerHTML = html;
   }
@@ -760,9 +860,8 @@
     document.getElementById('f-url').value = ''; document.getElementById('f-shop').value = ''; document.getElementById('f-shop').dataset.touched = '';
     document.getElementById('f-price').value = ''; document.getElementById('f-price').dataset.touched = ''; document.getElementById('f-size').value = ''; const priceHintReset = document.getElementById('priceHint'); if(priceHintReset) priceHintReset.style.display = 'none';
     document.getElementById('f-avail-rupture').checked = false; document.getElementById('f-avail-rupture').dataset.touched = '';
-    document.getElementById('f-cat').value = state.categories.length ? state.categories[0].id : ''; 
-    document.getElementById('f-note').value = ''; document.getElementById('f-image').value = '';
-    document.getElementById('previewBox').innerHTML = `<span class="preview-placeholder">La photo apparaîtra ici une fois le lien collé</span>`;
+    document.getElementById('f-cat').value = state.categories.length ? state.categories[0].id : ''; document.getElementById('f-note').value = ''; document.getElementById('f-image').value = '';
+    document.getElementById('previewBox').innerHTML = `<span class="preview-placeholder">La photo apparaîtra ici</span>`;
     fetchedImage = null; currentTags = []; renderTagInputChips(); editingId = null;
     document.getElementById('submitBtn').textContent = 'Ajouter à la liste'; document.getElementById('cancelEdit').style.display = 'none';
   }
@@ -781,7 +880,7 @@
     if(editingId){ Object.assign(state.items.find(i => i.id === editingId), {url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null}); } 
     else { state.items.push({ id: uid(), url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null, addedAt: Date.now() }); }
     
-    saveState(); resetForm(); render(); 
+    saveState(); resetForm(); render(); updateSidebarLists();
   });
 
   window.startEdit = function(id){
@@ -799,74 +898,35 @@
     document.querySelector('.panel').scrollIntoView({behavior: 'smooth', block: 'center'});
   }
   
-  window.deleteItem = function(id){ 
-    if(!canEdit()) return;
-    state.items = state.items.filter(i => i.id !== id); saveState(); render();
-  }
-  
+  window.deleteItem = function(id){ if(!canEdit()) return; state.items = state.items.filter(i => i.id !== id); saveState(); render(); updateSidebarLists(); }
   document.getElementById('searchInput').addEventListener('input', render);
 
   function renderCatChip(cat, isSub, hasChildren = false, ownerMode = false){ 
     const active = activeCategoryFilter === cat.id; const isCollapsed = localCollapsedCats.includes(cat.id);
     const expandBtn = hasChildren ? `<span class="cat-expand ${isCollapsed?'collapsed':''}" data-togglecat="${cat.id}">▼</span>` : '';
-    // L'édition des catégories reste exclusive au propriétaire
     const delBtn = ownerMode ? `<span class="chip-del" data-delcat="${cat.id}">✕</span>` : '';
     return `<button class="chip ${active?'active':''} ${isSub?'chip-sub':''}" data-filter="${cat.id}"><span class="dot" style="background:${cat.color}"></span>${isSub?'↳ ':''}${escapeHtml(cat.name)} ${expandBtn}${delBtn}</button>`; 
   }
 
   function renderCategoryToolbar(){
-    const ownerMode = isOwner();
-    const el = document.getElementById('catToolbar');
+    const ownerMode = isOwner(); const el = document.getElementById('catToolbar');
     let html = `<button class="chip ${activeCategoryFilter==='all'?'active':''}" data-filter="all">Toutes</button>`;
     getTopLevelCategories().forEach(top => { 
-      const children = getChildren(top.id);
-      html += renderCatChip(top, false, children.length > 0, ownerMode); 
+      const children = getChildren(top.id); html += renderCatChip(top, false, children.length > 0, ownerMode); 
       if (!localCollapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true, false, ownerMode); }); }
     });
-    
-    // N'afficher la création de catégorie que si on est propriétaire absolu
-    if (ownerMode) {
-      const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join('');
-      html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie principale</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`;
-    }
+    if (ownerMode) { const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join(''); html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`; }
     el.innerHTML = html;
     
     el.querySelectorAll('.chip[data-filter]').forEach(btn => { btn.addEventListener('click', (e) => { if(e.target.closest('[data-delcat]') || e.target.closest('[data-togglecat]')) return; activeCategoryFilter = btn.dataset.filter; render(); }); });
-    el.querySelectorAll('[data-togglecat]').forEach(btn => { 
-      btn.addEventListener('click', (e) => { 
-        e.stopPropagation(); const id = btn.dataset.togglecat; 
-        if(localCollapsedCats.includes(id)) { localCollapsedCats = localCollapsedCats.filter(c => c !== id); } else { localCollapsedCats.push(id); } 
-        render(); 
-      }); 
-    });
-    
+    el.querySelectorAll('[data-togglecat]').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.togglecat; if(localCollapsedCats.includes(id)) { localCollapsedCats = localCollapsedCats.filter(c => c !== id); } else { localCollapsedCats.push(id); } render(); }); });
     if (ownerMode) {
-      el.querySelectorAll('[data-delcat]').forEach(btn => { 
-        btn.addEventListener('click', (e) => { 
-          e.stopPropagation(); const id = btn.dataset.delcat; const cat = state.categories.find(c => c.id === id); if(!cat) return; 
-          const childIds = getChildren(id).map(c => c.id); const allIds = [id, ...childIds]; 
-          if(!confirm(`Supprimer la catégorie "${cat.name}" ?`)) return; 
-          state.categories = state.categories.filter(c => !allIds.includes(c.id)); 
-          if (state.categories.length === 0) { state.categories.push({id: uid(), name: 'Général', color: colorForIndex(0), parentId: null, locked: false}); }
-          const fallbackId = state.categories[0].id;
-          state.items.forEach(it => { if(allIds.includes(it.categoryId)) it.categoryId = fallbackId; }); 
-          if(allIds.includes(activeCategoryFilter)) activeCategoryFilter = 'all'; 
-          saveState(); render(); 
-        }); 
-      });
+      el.querySelectorAll('[data-delcat]').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.delcat; const cat = state.categories.find(c => c.id === id); if(!cat) return; const childIds = getChildren(id).map(c => c.id); const allIds = [id, ...childIds]; if(!confirm(`Supprimer la catégorie "${cat.name}" ?`)) return; state.categories = state.categories.filter(c => !allIds.includes(c.id)); if (state.categories.length === 0) { state.categories.push({id: uid(), name: 'Général', color: colorForIndex(0), parentId: null, locked: false}); } const fallbackId = state.categories[0].id; state.items.forEach(it => { if(allIds.includes(it.categoryId)) it.categoryId = fallbackId; }); if(allIds.includes(activeCategoryFilter)) activeCategoryFilter = 'all'; saveState(); render(); }); });
       document.getElementById('addCatBtn').addEventListener('click', addCategory); document.getElementById('newCatInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') addCategory(); });
     }
   }
 
-  function addCategory(){ 
-    if(!isOwner()) return;
-    const input = document.getElementById('newCatInput'), parentSel = document.getElementById('newCatParent'), name = input.value.trim(); 
-    if(!name) return; 
-    const parentId = parentSel.value || null, id = uid(); 
-    state.categories.push({id, name, color: colorForIndex(state.categories.length), parentId, locked:false}); 
-    input.value = ''; saveState(); render(); 
-  }
-  
+  function addCategory(){ if(!isOwner()) return; const input = document.getElementById('newCatInput'), parentSel = document.getElementById('newCatParent'), name = input.value.trim(); if(!name) return; const parentId = parentSel.value || null, id = uid(); state.categories.push({id, name, color: colorForIndex(state.categories.length), parentId, locked:false}); input.value = ''; saveState(); render(); }
   function itemMatchesSearch(item, query){ if(!query) return true; return `${item.shop} ${item.note||''} ${item.size} ${(item.tags||[]).join(' ')}`.toLowerCase().includes(query.toLowerCase()); }
   function itemMatchesTags(item){ if(activeTagFilters.size === 0) return true; return (item.tags||[]).some(t => activeTagFilters.has(t)); }
 
@@ -884,31 +944,28 @@
   function renderItemCard(item){
     const cat = findCategory(item.categoryId), style = AVAIL_STYLE[item.availability] || AVAIL_STYLE['Inconnue'];
     const photoHtml = `<div class="ph-placeholder" style="background:${cat.color}18">${iconHanger(cat.color)}</div>${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.shop)}" loading="lazy" onerror="this.style.display='none'">` : ''}`;
-    
     const editBtns = canEdit() ? `<div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="if(confirm('Supprimer ?')) window.deleteItem('${item.id}')">${iconTrash()}</button></div>` : '';
-
     return `<div class="item-card"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(item.availability)}</span>${editBtns}</div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div><a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
   }
   
   function itemsForCategoryId(catId, query){ return state.items.filter(i => i.categoryId === catId && itemMatchesSearch(i, query) && itemMatchesTags(i)); }
-  function renderLeafSection(cat, items){ return `<div class="cat-section"><div class="cat-section-head"><span class="cat-dot-big" style="background:${cat.color}"></span><h3>${escapeHtml(cat.name)}</h3><span class="cat-section-count">${items.length} article${items.length>1?'s':''}</span></div>${items.length ? `<div class="card-grid">${items.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici pour l'instant.</div>`}</div>`; }
+  function renderLeafSection(cat, items){ return `<div class="cat-section"><div class="cat-section-head"><span class="cat-dot-big" style="background:${cat.color}"></span><h3>${escapeHtml(cat.name)}</h3><span class="cat-section-count">${items.length} article${items.length>1?'s':''}</span></div>${items.length ? `<div class="card-grid">${items.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici.</div>`}</div>`; }
 
   function renderRacks(){
     const el = document.getElementById('racks'), query = document.getElementById('searchInput').value;
     if(state.items.length === 0){ el.innerHTML = `<div class="global-empty"><strong>La liste est vide</strong>${canEdit() ? 'Ajoutez votre premier lien ci-dessus pour commencer.' : 'Le propriétaire n\'a pas encore ajouté de vêtements.'}</div>`; return; }
     let html = '', anyVisible = false; const filterCat = activeCategoryFilter === 'all' ? null : state.categories.find(c => c.id === activeCategoryFilter);
-    if(filterCat && filterCat.parentId){ const items = itemsForCategoryId(filterCat.id, query); anyVisible = items.length > 0; html += renderLeafSection(filterCat, items);
-    } else {
+    if(filterCat && filterCat.parentId){ const items = itemsForCategoryId(filterCat.id, query); anyVisible = items.length > 0; html += renderLeafSection(filterCat, items); } 
+    else {
       const topsToRender = filterCat ? [filterCat] : getTopLevelCategories();
       topsToRender.forEach(top => {
         const children = getChildren(top.id), ownItems = itemsForCategoryId(top.id, query), childBlocks = children.map(child => ({ cat: child, items: itemsForCategoryId(child.id, query) })), totalCount = ownItems.length + childBlocks.reduce((s, b) => s + b.items.length, 0);
-        if(activeCategoryFilter === 'all' && totalCount === 0) return; anyVisible = true;
-        let inner;
-        if(children.length === 0){ inner = ownItems.length ? `<div class="card-grid">${ownItems.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici pour l'instant.</div>`;
-        } else {
-          let sub = ''; childBlocks.forEach(b => { if(b.items.length === 0 && activeCategoryFilter === 'all') return; sub += `<div class="sub-section"><div class="sub-section-head"><span class="sub-dot" style="background:${b.cat.color}"></span><h4>${escapeHtml(b.cat.name)}</h4><span class="cat-section-count">${b.items.length} article${b.items.length>1?'s':''}</span></div>${b.items.length ? `<div class="card-grid">${b.items.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici pour l'instant.</div>`}</div>`; });
-          if(ownItems.length){ sub += `<div class="sub-section"><div class="sub-section-head"><span class="sub-dot" style="background:${top.color}"></span><h4>Autres (${escapeHtml(top.name)})</h4><span class="cat-section-count">${ownItems.length} article${ownItems.length>1?'s':''}</span></div><div class="card-grid">${ownItems.map(renderItemCard).join('')}</div></div>`; }
-          inner = sub || `<div class="section-empty">Aucun article ici pour l'instant.</div>`;
+        if(activeCategoryFilter === 'all' && totalCount === 0) return; anyVisible = true; let inner;
+        if(children.length === 0){ inner = ownItems.length ? `<div class="card-grid">${ownItems.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici.</div>`; } 
+        else {
+          let sub = ''; childBlocks.forEach(b => { if(b.items.length === 0 && activeCategoryFilter === 'all') return; sub += `<div class="sub-section"><div class="sub-section-head"><span class="sub-dot" style="background:${b.cat.color}"></span><h4>${escapeHtml(b.cat.name)}</h4><span class="cat-section-count">${b.items.length} art.</span></div>${b.items.length ? `<div class="card-grid">${b.items.map(renderItemCard).join('')}</div>` : `<div class="section-empty">Aucun article ici.</div>`}</div>`; });
+          if(ownItems.length){ sub += `<div class="sub-section"><div class="sub-section-head"><span class="sub-dot" style="background:${top.color}"></span><h4>Autres (${escapeHtml(top.name)})</h4><span class="cat-section-count">${ownItems.length} art.</span></div><div class="card-grid">${ownItems.map(renderItemCard).join('')}</div></div>`; }
+          inner = sub || `<div class="section-empty">Aucun article ici.</div>`;
         }
         html += `<div class="cat-section"><div class="cat-section-head"><span class="cat-dot-big" style="background:${top.color}"></span><h3>${escapeHtml(top.name)}</h3><span class="cat-section-count">${totalCount} article${totalCount>1?'s':''}</span></div>${inner}</div>`;
       });
@@ -937,7 +994,15 @@
   document.querySelectorAll('.toggle-btn').forEach(btn => { btn.addEventListener('click', () => { chartMode = btn.dataset.chartmode; chartExcluded.clear(); document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn)); renderSummary(); }); });
   function render(){ if(canEdit()) renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
   
-  loadState();
+  // --- DEMARRAGE DE L'APP ---
+  const initialUrlParams = new URLSearchParams(window.location.search);
+  const initialListId = initialUrlParams.get('liste');
+  
+  if (initialListId) {
+    window.showList(initialListId);
+  } else {
+    window.showDashboard();
+  }
 </script>
 </body>
 </html>
