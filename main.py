@@ -154,6 +154,23 @@ def extract_price_from_dom(response):
     return None
 
 
+# Dernier recours absolu : cherche un motif de prix dans le texte brut de la page rendue
+PRICE_TEXT_PATTERN = re.compile(r'(\d{1,4}(?:[.,]\d{2})?)\s?(?:€|EUR)')
+
+
+def extract_price_from_raw_text(response):
+    try:
+        full_text = response.get_all_text() if hasattr(response, 'get_all_text') else response.body.decode('utf-8', 'ignore')
+    except Exception:
+        return None
+    matches = PRICE_TEXT_PATTERN.findall(full_text or "")
+    for m in matches:
+        price = parse_price_string(m)
+        if price is not None:
+            return price
+    return None
+
+
 def extract_data(response, url: str):
     jsonld = extract_jsonld_product(response) or {}
 
@@ -185,6 +202,10 @@ def extract_data(response, url: str):
         price = extract_price_from_dom(response)
         confidence = "low" if price is not None else None
 
+    if price is None:
+        price = extract_price_from_raw_text(response)
+        confidence = "low" if price is not None else None
+
     availability_raw = (jsonld.get("availability") or "").lower()
     availability = "outofstock" if "outofstock" in availability_raw else (
         "instock" if "instock" in availability_raw else "Inconnue"
@@ -208,7 +229,8 @@ def is_complete(data: dict) -> bool:
 
 
 @app.get("/api/scrape")
-def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper")):
+def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper"),
+                debug: bool = Query(False, description="Renvoie des infos de diagnostic")):
     if not url:
         raise HTTPException(status_code=400, detail="URL manquante")
 
@@ -216,19 +238,25 @@ def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper"
 
     data = {"title": "", "shop": guess_shop_from_url(url), "image": None, "price": None,
             "price_confidence": None, "availability": "Inconnue"}
+    debug_info = {"simple_fetch": None, "stealthy_fetch": None}
 
     # 1er essai : requête HTTP simple (rapide, marche pour le HTML statique)
     try:
         response = Fetcher().get(url, timeout=15)
+        debug_info["simple_fetch"] = {"status": response.status, "html_length": len(response.body or b"")}
         data = extract_data(response, url)
     except Exception as e:
         print(f"[SCRAPE] Échec fetch simple : {e}")
+        debug_info["simple_fetch"] = {"error": str(e)}
 
     # 2e essai si prix ou image manquants : navigateur headless (JS rendu + anti-bot)
     if not is_complete(data):
         try:
             print("[SCRAPE] Données incomplètes, tentative avec StealthyFetcher...")
-            response = StealthyFetcher().get(url, timeout=30, network_idle=True)
+            # network_idle + timeout élevé : certains sites (Nike, sites Next.js/React lourds)
+            # chargent le prix via des appels API internes après le rendu initial.
+            response = StealthyFetcher().get(url, timeout=45000, network_idle=True, wait=3000)
+            debug_info["stealthy_fetch"] = {"status": response.status, "html_length": len(response.body or b"")}
             data2 = extract_data(response, url)
             for key in ["title", "shop", "image", "price", "price_confidence"]:
                 if not data.get(key) and data2.get(key):
@@ -237,6 +265,9 @@ def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper"
                 data["availability"] = data2["availability"]
         except Exception as e:
             print(f"[SCRAPE] Échec StealthyFetcher : {e}")
+            debug_info["stealthy_fetch"] = {"error": str(e)}
 
     print(f"[SCRAPE] Résultat : {data}")
+    if debug:
+        data["_debug"] = debug_info
     return data
