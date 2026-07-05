@@ -283,9 +283,9 @@
         </div>
       </div>
 
-      <div class="sidebar-section-title">Mes Listes Cloud</div>
       <div id="userListsContainer" style="display:flex; flex-direction:column; gap:6px;">
-        <!-- Rempli par JS -->
+        <!-- Rempli par JS (Séparé en perso et collab) -->
+        <div class="sidebar-section-title">Mes Listes Cloud</div>
         <div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>
       </div>
     </div>
@@ -312,9 +312,14 @@
 
       <div class="hero">
         <div>
-          <!-- Modifié pour afficher le nom dynamique -->
           <span class="hero-eyebrow" id="mainListEyebrow">Wishlist Personnelle</span>
-          <h1 class="hero-title" id="mainListTitle">Ma liste de vêtements</h1>
+          <h1 class="hero-title" style="display:flex; align-items:center; gap:12px;">
+            <span id="mainListTitle">Ma liste de vêtements</span>
+            <!-- Bouton Modifier le nom -->
+            <button id="editTitleBtn" onclick="window.openRenameListModal()" style="display:none; background:none; border:none; color:var(--muted-2); cursor:pointer; padding:4px; border-radius:50%; transition:color 0.2s, background 0.2s;" title="Renommer la liste">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+            </button>
+          </h1>
         </div>
         <div class="hero-stats">
           <div class="stat"><span class="stat-value" id="statCount">0</span><span class="stat-label">Articles</span></div>
@@ -454,6 +459,19 @@
   </div>
 </div>
 
+<!-- MODALE RENOMMER LISTE -->
+<div class="modal-overlay" id="renameListModal">
+  <div class="modal-card" style="max-width: 400px;">
+    <button class="modal-close" onclick="window.closeRenameListModal()">✕</button>
+    <h2 style="font-family: var(--font-display); margin-top: 0;">Renommer la Liste</h2>
+    <div class="field" style="margin-bottom:24px;">
+      <label class="field-title">Nouveau nom</label>
+      <input type="text" id="renameListName" placeholder="Ex: Ma wishlist" onkeydown="if(event.key === 'Enter') window.confirmRenameList()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="window.confirmRenameList()">Enregistrer</button>
+  </div>
+</div>
+
 <!-- MODALE UNIVERSELLE DE CONFIRMATION -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-card" style="max-width: 400px; text-align: center;">
@@ -589,7 +607,6 @@
   onAuthStateChanged(auth, async (user) => {
     currentUser = user; const authBar = document.getElementById('authBar');
     if(user) {
-      // Boutons en colonne (flex-direction: column) pour résoudre le bug visuel
       authBar.innerHTML = `<span class="auth-user" title="${user.email}">${user.email || 'Utilisateur'}</span><div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button></div>`;
     } else {
       authBar.innerHTML = `<button class="btn btn-primary" onclick="window.openAuthModal('login')">Se connecter</button>`;
@@ -614,46 +631,53 @@
     resetForm(); loadState(currentListId);
   }
 
-  // --- NOUVELLE MODALE POUR DONNER UN NOM À LA LISTE ---
+  // --- CREATION DE LISTE ---
   window.openNewListModal = function() {
     if(!currentUser) { window.openAuthModal('signup'); return; }
     document.getElementById('newListModal').classList.add('open');
     document.getElementById('newListName').value = '';
     setTimeout(() => document.getElementById('newListName').focus(), 100);
   }
-  
-  window.closeNewListModal = function() {
-    document.getElementById('newListModal').classList.remove('open');
-  }
+  window.closeNewListModal = function() { document.getElementById('newListModal').classList.remove('open'); }
 
   window.confirmCreateNewList = async function() {
     let name = document.getElementById('newListName').value.trim();
     if (!name) {
-      // Si vide, calcule le nombre de listes appartenant à l'utilisateur
       const lists = await fetchUserLists(currentUser.uid);
       const ownedCount = lists.filter(l => l.role === 'owner').length;
       name = `Liste ${ownedCount + 1}`;
     }
-    
     const newListId = Math.random().toString(36).substring(2, 8);
-    const initialState = {
-      ownerId: currentUser.uid,
-      name: name,
-      collaborators: [],
-      categories: DEFAULT_CATEGORIES.map(c => ({...c})),
-      items: [],
-      tagColors: {}
-    };
-    
+    const initialState = { ownerId: currentUser.uid, name: name, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
     try {
       await setDoc(doc(db, "wishlists", newListId), initialState);
       window.closeNewListModal();
       window.showList(newListId);
-    } catch(e) {
-      console.error(e);
-      window.showToast("Erreur lors de la création de la liste.", true);
-    }
+      window.showToast("Liste créée avec succès !");
+    } catch(e) { console.error(e); window.showToast("Erreur lors de la création de la liste.", true); }
   }
+
+  // --- RENOMMER LA LISTE ---
+  window.openRenameListModal = function() {
+    if(!isOwner()) return;
+    document.getElementById('renameListModal').classList.add('open');
+    document.getElementById('renameListName').value = state.name || '';
+    setTimeout(() => document.getElementById('renameListName').focus(), 100);
+  }
+  window.closeRenameListModal = function() { document.getElementById('renameListModal').classList.remove('open'); }
+
+  window.confirmRenameList = function() {
+    const newName = document.getElementById('renameListName').value.trim();
+    if(newName && newName !== state.name) {
+      state.name = newName;
+      saveState();
+      checkOwnershipAndRender(); // Met à jour le titre
+      updateSidebarLists();      // Met à jour la barre latérale
+      window.showToast("Liste renommée !");
+    }
+    window.closeRenameListModal();
+  }
+
 
   window.deleteCurrentList = function() {
     if (!currentListId || !isOwner()) return; 
@@ -729,32 +753,37 @@
     } catch (error) { console.error(error); return []; }
   }
 
+  // --- SEPARATION DES LISTES DANS LA BARRE LATERALE ---
   async function updateSidebarLists() {
     const container = document.getElementById('userListsContainer');
-    if (!currentUser) { container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>`; return; }
-    container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px;">Chargement...</div>`;
+    if (!currentUser) { container.innerHTML = `<div class="sidebar-section-title">Mes Listes Cloud</div><div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>`; return; }
+    
+    container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; margin-top:20px;">Chargement...</div>`;
     const lists = await fetchUserLists(currentUser.uid);
-    if (lists.length === 0) { container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Aucune liste pour le moment.</div>`; return; }
+    if (lists.length === 0) { container.innerHTML = `<div class="sidebar-section-title">Mes Listes Cloud</div><div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Aucune liste pour le moment.</div>`; return; }
+    
     let html = '';
     
-    // Trie pour avoir les listes possédées d'abord
-    lists.sort((a, b) => {
-        if(a.role === 'owner' && b.role !== 'owner') return -1;
-        if(a.role !== 'owner' && b.role === 'owner') return 1;
-        return 0;
-    });
+    const personalLists = lists.filter(l => l.role === 'owner');
+    if (personalLists.length > 0) {
+      html += `<div class="sidebar-section-title" style="color:var(--accent);">Mes listes personnelles</div>`;
+      personalLists.forEach(list => {
+        const itemCount = list.items ? list.items.length : 0; 
+        const safeName = escapeHtml(list.name || "Nouvelle liste");
+        html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="window.showList('${list.id}')">👤 <span style="overflow:hidden; text-overflow:ellipsis;">${safeName}</span> <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
+      });
+    }
 
-    lists.forEach(list => {
-      const itemCount = list.items ? list.items.length : 0; 
-      const isOwner = list.role === 'owner'; 
-      const icon = isOwner ? '👤' : '🤝'; 
-      
-      // Affiche le vrai nom de la liste dans la barre latérale
-      const safeName = escapeHtml(list.name || "Nouvelle liste");
-      const label = isOwner ? safeName : `Partagée: ${safeName}`;
-      
-      html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="window.showList('${list.id}')">${icon} <span style="overflow:hidden; text-overflow:ellipsis;">${label}</span> <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
-    });
+    const collabLists = lists.filter(l => l.role === 'collab');
+    if (collabLists.length > 0) {
+      html += `<div class="sidebar-section-title" style="color:#0B7A5A; margin-top:16px;">Listes collaboratives</div>`;
+      collabLists.forEach(list => {
+        const itemCount = list.items ? list.items.length : 0; 
+        const safeName = escapeHtml(list.name || "Nouvelle liste");
+        html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="window.showList('${list.id}')">🤝 <span style="overflow:hidden; text-overflow:ellipsis;">(Collaborateur) ${safeName}</span> <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
+      });
+    }
+
     container.innerHTML = html;
     if(currentListId) { const activeNav = document.getElementById('nav-list-' + currentListId); if(activeNav) activeNav.classList.add('active'); }
   }
@@ -794,6 +823,7 @@
   function isCollaborator() { return currentUser && state.collaborators && state.collaborators.includes(currentUser.uid); }
   function canEdit() { return (!state.ownerId) || isOwner() || isCollaborator(); }
 
+  // --- CORRECTION DU BUG D'INVITATION ICI ---
   function checkOwnershipAndRender() {
     if (!isStateLoaded || !currentListId) return; 
     
@@ -810,7 +840,21 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     if (currentUser && urlParams.get('invite') === 'true') {
-      if (state.ownerId && state.ownerId !== currentUser.uid && !state.collaborators.includes(currentUser.uid)) { state.collaborators.push(currentUser.uid); saveState(); updateSidebarLists(); }
+      if (state.ownerId && state.ownerId !== currentUser.uid && !state.collaborators.includes(currentUser.uid)) {
+        // FORCER LA MISE A JOUR SUR FIREBASE (sans passer par saveState qui bloquait avec canEdit() = false)
+        const newCollabs = [...state.collaborators, currentUser.uid];
+        updateDoc(doc(db, "wishlists", currentListId), { collaborators: newCollabs })
+          .then(() => {
+            state.collaborators = newCollabs;
+            window.showToast("Tu as rejoint la liste en tant que collaborateur !");
+            updateSidebarLists();
+            checkOwnershipAndRender(); // Met à jour l'interface maintenant qu'on est collab
+          })
+          .catch(e => {
+            console.error("Erreur invitation:", e);
+            window.showToast("Erreur lors de l'invitation. (Règles Firestore ?)", true);
+          });
+      }
       const url = new URL(window.location.href); url.searchParams.delete('invite'); window.history.replaceState(null, '', url.toString());
     }
 
@@ -824,17 +868,19 @@
     document.querySelector('.owner-num-mid').textContent = editMode ? "02" : "01";
     document.querySelector('.owner-num-last').textContent = editMode ? "03" : "02";
     
-    // METTRE À JOUR LE TITRE DYNAMIQUE DE LA PAGE
+    // GESTION DU TITRE ET DU BOUTON MODIFIER
     const mainTitle = document.getElementById('mainListTitle');
     const mainEyebrow = document.getElementById('mainListEyebrow');
-    if (mainTitle) mainTitle.innerText = state.name || "Ma liste";
+    const editBtn = document.getElementById('editTitleBtn');
+    
+    if (mainTitle) mainTitle.innerText = state.name || "Nouvelle liste";
+    if (editBtn) editBtn.style.display = ownerMode ? 'inline-block' : 'none';
+    
     if (mainEyebrow) {
         if (state.collaborators && state.collaborators.length > 0) {
-            mainEyebrow.innerText = "Wishlist Partagée";
-            mainEyebrow.style.color = "#0B7A5A";
+            mainEyebrow.innerText = "Wishlist Partagée"; mainEyebrow.style.color = "#0B7A5A";
         } else {
-            mainEyebrow.innerText = "Wishlist Personnelle";
-            mainEyebrow.style.color = "var(--accent)";
+            mainEyebrow.innerText = "Wishlist Personnelle"; mainEyebrow.style.color = "var(--accent)";
         }
     }
 
