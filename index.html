@@ -68,7 +68,7 @@
   /* Hero & Stats */
   .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px;}
   .hero-eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:10px;}
-  .hero-title{font-family:var(--font-display); font-weight:700; font-size:clamp(30px,4.4vw,44px); margin:0; line-height:1.05;}
+  .hero-title{font-family:var(--font-display); font-weight:700; font-size:clamp(30px,4.4vw,44px); margin:0; line-height:1.05; word-break: break-word;}
   .hero-stats{display:flex; gap:24px;}
   .stat{background:var(--bg-alt); border-radius:var(--radius-md); padding:14px 20px; min-width:96px;}
   .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; display:block;}
@@ -256,7 +256,8 @@
       <!-- Rempli dynamiquement par JS -->
     </div>
 
-    <button class="btn btn-primary" style="width:100%; margin-bottom:20px; flex:none;" onclick="window.createNewWishlist()">+ Nouvelle Liste</button>
+    <!-- Modifié pour ouvrir la nouvelle modale de création -->
+    <button class="btn btn-primary" style="width:100%; margin-bottom:20px; flex:none;" onclick="window.openNewListModal()">+ Nouvelle Liste</button>
 
     <div class="sidebar-nav">
       <div class="sidebar-item active" id="nav-dashboard" onclick="window.showDashboard()">
@@ -311,8 +312,9 @@
 
       <div class="hero">
         <div>
-          <span class="hero-eyebrow">Wishlist Partagée</span>
-          <h1 class="hero-title">Ma liste de<br>vêtements</h1>
+          <!-- Modifié pour afficher le nom dynamique -->
+          <span class="hero-eyebrow" id="mainListEyebrow">Wishlist Personnelle</span>
+          <h1 class="hero-title" id="mainListTitle">Ma liste de vêtements</h1>
         </div>
         <div class="hero-stats">
           <div class="stat"><span class="stat-value" id="statCount">0</span><span class="stat-label">Articles</span></div>
@@ -439,7 +441,20 @@
   </div>
 </div>
 
-<!-- MODALE UNIVERSELLE DE CONFIRMATION (REMPLACE LES ALERTS) -->
+<!-- MODALE NOUVELLE LISTE -->
+<div class="modal-overlay" id="newListModal">
+  <div class="modal-card" style="max-width: 400px;">
+    <button class="modal-close" onclick="window.closeNewListModal()">✕</button>
+    <h2 style="font-family: var(--font-display); margin-top: 0;">Nouvelle Liste</h2>
+    <div class="field" style="margin-bottom:24px;">
+      <label class="field-title">Nom de la liste (optionnel)</label>
+      <input type="text" id="newListName" placeholder="Ex: Vêtements Hiver 2024" onkeydown="if(event.key === 'Enter') window.confirmCreateNewList()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="window.confirmCreateNewList()">Créer la liste</button>
+  </div>
+</div>
+
+<!-- MODALE UNIVERSELLE DE CONFIRMATION -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-card" style="max-width: 400px; text-align: center;">
     <button class="modal-close" onclick="window.closeConfirmModal()">✕</button>
@@ -460,7 +475,6 @@
     else { sb.classList.toggle('collapsed'); sb.classList.remove('open'); }
   }
 
-  // --- SYSTEME DE TOASTS (Remplaçant les Alertes natives "Lien copié" etc) ---
   window.showToast = function(msg, isError = false) {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -471,9 +485,7 @@
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
   }
 
-  // --- MODALE UNIVERSELLE DE CONFIRMATION ---
   let confirmAction = null;
-  
   window.openConfirmModal = function(title, desc, action, btnText = "Oui, confirmer") {
     document.getElementById('confirmTitle').innerText = title;
     document.getElementById('confirmDesc').innerHTML = desc;
@@ -511,54 +523,36 @@
 
   let currentListId = null;
 
-  // --- GESTION DU BOUTON DE CONFIRMATION DE LA MODALE ---
   document.getElementById('confirmBtn').addEventListener('click', async () => {
     if(confirmAction) {
-      const btn = document.getElementById('confirmBtn');
-      const originalText = btn.innerText;
-      btn.innerText = "Chargement...";
-      btn.disabled = true;
-      try {
-        await confirmAction();
-      } catch(e) {
-        console.error(e);
-        const errEl = document.getElementById('confirmError');
-        // Analyse de l'erreur pour afficher un message clair sans alert native
-        if (e.code === 'permission-denied') {
-          errEl.innerText = "Accès refusé ! Vous n'avez pas l'autorisation de supprimer ceci. (Avez-vous bien configuré les Règles Firestore ?)";
-        } else if (e.code === 'auth/requires-recent-login') {
-          errEl.innerText = "Sécurité : Veuillez vous déconnecter et vous reconnecter avant de supprimer votre compte.";
-        } else {
-          errEl.innerText = e.message || "Une erreur est survenue sur le serveur.";
-        }
+      const btn = document.getElementById('confirmBtn'); const originalText = btn.innerText;
+      btn.innerText = "Chargement..."; btn.disabled = true;
+      try { await confirmAction(); } catch(e) {
+        console.error(e); const errEl = document.getElementById('confirmError');
+        if (e.code === 'permission-denied') { errEl.innerText = "Accès refusé ! Vous n'avez pas l'autorisation. (Avez-vous bien configuré les Règles Firestore ?)"; } 
+        else if (e.code === 'auth/requires-recent-login') { errEl.innerText = "Sécurité : Veuillez vous déconnecter et vous reconnecter avant de supprimer votre compte."; } 
+        else { errEl.innerText = e.message || "Une erreur est survenue."; }
         errEl.style.display = 'block';
-      } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-      }
+      } finally { btn.innerText = originalText; btn.disabled = false; }
     }
   });
 
-  // --- ACTIONS DE PARTAGE ET INVITATION AVEC TOAST ---
   window.partagerListe = function() {
     if(!currentListId) return;
     const url = new URL(window.location.origin + window.location.pathname);
-    url.searchParams.set('liste', currentListId);
-    const cleanUrl = url.toString();
-    if (navigator.share) { navigator.share({ title: 'Ma Wishlist Partagée', url: cleanUrl }).catch(e => {}); } 
-    else { navigator.clipboard.writeText(cleanUrl).then(() => window.showToast("✅ Lien de lecture copié !")).catch(() => window.showToast("Erreur de copie", true)); }
+    url.searchParams.set('liste', currentListId); const cleanUrl = url.toString();
+    if (navigator.share) { navigator.share({ title: 'Ma Wishlist', url: cleanUrl }).catch(e => {}); } 
+    else { navigator.clipboard.writeText(cleanUrl).then(() => window.showToast("✅ Lien copié !")).catch(() => window.showToast("Erreur de copie", true)); }
   }
 
   window.inviterAmi = function() {
     if(!currentListId) return;
     const url = new URL(window.location.origin + window.location.pathname);
-    url.searchParams.set('liste', currentListId); url.searchParams.set('invite', 'true'); 
-    const inviteUrl = url.toString();
+    url.searchParams.set('liste', currentListId); url.searchParams.set('invite', 'true'); const inviteUrl = url.toString();
     if (navigator.share) { navigator.share({ title: 'Invitation à collaborer', url: inviteUrl }).catch(e => {}); } 
     else { navigator.clipboard.writeText(inviteUrl).then(() => window.showToast("✅ Lien d'invitation copié !")).catch(() => window.showToast("Erreur de copie", true)); }
   }
 
-  // --- AUTHENTIFICATION ---
   let currentUser = null; let authMode = 'login'; 
 
   window.openAuthModal = function(mode = 'login') {
@@ -595,14 +589,14 @@
   onAuthStateChanged(auth, async (user) => {
     currentUser = user; const authBar = document.getElementById('authBar');
     if(user) {
-      authBar.innerHTML = `<span class="auth-user" title="${user.email}">${user.email || 'Utilisateur'}</span><div style="display:flex; gap:8px; margin-top:8px;"><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button></div>`;
+      // Boutons en colonne (flex-direction: column) pour résoudre le bug visuel
+      authBar.innerHTML = `<span class="auth-user" title="${user.email}">${user.email || 'Utilisateur'}</span><div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button></div>`;
     } else {
       authBar.innerHTML = `<button class="btn btn-primary" onclick="window.openAuthModal('login')">Se connecter</button>`;
     }
     await updateSidebarLists(); checkOwnershipAndRender();
   });
 
-  // --- LOGIQUE MULTI-VUES (SPA) ---
   window.showDashboard = function() {
     currentListId = null;
     document.getElementById('dashboardView').style.display = 'flex'; document.getElementById('mainPageContent').style.display = 'none'; document.getElementById('listActions').style.display = 'none';
@@ -620,14 +614,47 @@
     resetForm(); loadState(currentListId);
   }
 
-  window.createNewWishlist = function() {
+  // --- NOUVELLE MODALE POUR DONNER UN NOM À LA LISTE ---
+  window.openNewListModal = function() {
     if(!currentUser) { window.openAuthModal('signup'); return; }
-    const newListId = Math.random().toString(36).substring(2, 8); window.showList(newListId);
+    document.getElementById('newListModal').classList.add('open');
+    document.getElementById('newListName').value = '';
+    setTimeout(() => document.getElementById('newListName').focus(), 100);
+  }
+  
+  window.closeNewListModal = function() {
+    document.getElementById('newListModal').classList.remove('open');
   }
 
-  // --- LES SUPPRESSIONS (SANS ALERT NATIVE) ---
-  
-  // Suppression de la Liste
+  window.confirmCreateNewList = async function() {
+    let name = document.getElementById('newListName').value.trim();
+    if (!name) {
+      // Si vide, calcule le nombre de listes appartenant à l'utilisateur
+      const lists = await fetchUserLists(currentUser.uid);
+      const ownedCount = lists.filter(l => l.role === 'owner').length;
+      name = `Liste ${ownedCount + 1}`;
+    }
+    
+    const newListId = Math.random().toString(36).substring(2, 8);
+    const initialState = {
+      ownerId: currentUser.uid,
+      name: name,
+      collaborators: [],
+      categories: DEFAULT_CATEGORIES.map(c => ({...c})),
+      items: [],
+      tagColors: {}
+    };
+    
+    try {
+      await setDoc(doc(db, "wishlists", newListId), initialState);
+      window.closeNewListModal();
+      window.showList(newListId);
+    } catch(e) {
+      console.error(e);
+      window.showToast("Erreur lors de la création de la liste.", true);
+    }
+  }
+
   window.deleteCurrentList = function() {
     if (!currentListId || !isOwner()) return; 
     window.openConfirmModal(
@@ -646,7 +673,6 @@
     );
   }
 
-  // Suppression du compte global
   window.deleteAccount = function() {
     if (!currentUser) return;
     window.openConfirmModal(
@@ -678,7 +704,6 @@
     );
   }
 
-  // Suppression d'un article
   window.deleteItem = function(id){ 
     if(!canEdit()) return; 
     window.openConfirmModal(
@@ -693,7 +718,6 @@
     );
   }
 
-  // --- MEMOIRE DES LISTES ---
   async function fetchUserLists(uid) {
     const listsRef = collection(db, "wishlists"); const userLists = [];
     try {
@@ -712,15 +736,29 @@
     const lists = await fetchUserLists(currentUser.uid);
     if (lists.length === 0) { container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Aucune liste pour le moment.</div>`; return; }
     let html = '';
+    
+    // Trie pour avoir les listes possédées d'abord
+    lists.sort((a, b) => {
+        if(a.role === 'owner' && b.role !== 'owner') return -1;
+        if(a.role !== 'owner' && b.role === 'owner') return 1;
+        return 0;
+    });
+
     lists.forEach(list => {
-      const itemCount = list.items ? list.items.length : 0; const isOwner = list.role === 'owner'; const icon = isOwner ? '👤' : '🤝'; const label = isOwner ? `Ma liste (${list.id.slice(0,4)})` : `Partagée (${list.id.slice(0,4)})`;
-      html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="window.showList('${list.id}')">${icon} ${label} <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
+      const itemCount = list.items ? list.items.length : 0; 
+      const isOwner = list.role === 'owner'; 
+      const icon = isOwner ? '👤' : '🤝'; 
+      
+      // Affiche le vrai nom de la liste dans la barre latérale
+      const safeName = escapeHtml(list.name || "Nouvelle liste");
+      const label = isOwner ? safeName : `Partagée: ${safeName}`;
+      
+      html += `<div class="sidebar-item" id="nav-list-${list.id}" onclick="window.showList('${list.id}')">${icon} <span style="overflow:hidden; text-overflow:ellipsis;">${label}</span> <span style="margin-left:auto; font-size:11px; opacity:0.6;">${itemCount} art.</span></div>`;
     });
     container.innerHTML = html;
     if(currentListId) { const activeNav = document.getElementById('nav-list-' + currentListId); if(activeNav) activeNav.classList.add('active'); }
   }
 
-  // --- LOGIQUE DE L'APPLICATION LISTE ---
   window.togglePanel = function(panelId, iconId) {
     const panel = document.getElementById(panelId); const icon = document.getElementById(iconId);
     if (panel.classList.contains('collapsed')) { panel.classList.remove('collapsed'); icon.classList.remove('rotated'); } 
@@ -739,7 +777,7 @@
 
   function defaultCollapsedCats(categories){ return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id); }
 
-  let state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
+  let state = { ownerId: null, name: "Nouvelle liste", collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
   let localCollapsedCats = []; let hasInitCats = false; let isStateLoaded = false; let unsubscribeSnapshot = null;
   let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0; let chartExcluded = new Set(); 
 
@@ -760,7 +798,7 @@
     if (!isStateLoaded || !currentListId) return; 
     
     if (!state.ownerId && state.items.length === 0) {
-      if (currentUser) { state.ownerId = currentUser.uid; saveState(); updateSidebarLists(); } 
+      if (currentUser) { state.ownerId = currentUser.uid; if(!state.name) state.name = "Nouvelle liste"; saveState(); updateSidebarLists(); } 
       else {
         document.getElementById('racks').innerHTML = `<div class="global-empty"><strong>Création de liste</strong><p style="margin-bottom:16px;">Veuillez vous connecter pour créer et conserver cette liste.</p><button class="btn btn-primary" onclick="window.openAuthModal('signup')">Créer mon compte</button></div>`;
         document.getElementById('ownerAddSection').style.display = 'none'; document.getElementById('visitorBanner').style.display = 'none';
@@ -785,6 +823,21 @@
     document.querySelector('.owner-num').textContent = editMode ? "01" : "";
     document.querySelector('.owner-num-mid').textContent = editMode ? "02" : "01";
     document.querySelector('.owner-num-last').textContent = editMode ? "03" : "02";
+    
+    // METTRE À JOUR LE TITRE DYNAMIQUE DE LA PAGE
+    const mainTitle = document.getElementById('mainListTitle');
+    const mainEyebrow = document.getElementById('mainListEyebrow');
+    if (mainTitle) mainTitle.innerText = state.name || "Ma liste";
+    if (mainEyebrow) {
+        if (state.collaborators && state.collaborators.length > 0) {
+            mainEyebrow.innerText = "Wishlist Partagée";
+            mainEyebrow.style.color = "#0B7A5A";
+        } else {
+            mainEyebrow.innerText = "Wishlist Personnelle";
+            mainEyebrow.style.color = "var(--accent)";
+        }
+    }
+
     render();
   }
 
@@ -793,7 +846,7 @@
     isStateLoaded = false;
     unsubscribeSnapshot = onSnapshot(doc(db, "wishlists", idToLoad), (docSnap) => {
       isStateLoaded = true;
-      if (docSnap.exists()) { state = docSnap.data(); } else { state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
+      if (docSnap.exists()) { state = docSnap.data(); } else { state = { ownerId: null, name: "Nouvelle liste", collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
       if(!state.tagColors) state.tagColors = {}; if(!state.collaborators) state.collaborators = []; 
       ensureDefaultCategories(); 
       if(!hasInitCats) { localCollapsedCats = defaultCollapsedCats(state.categories); hasInitCats = true; }
