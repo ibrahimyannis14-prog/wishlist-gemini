@@ -1,8 +1,9 @@
 fastapi
 uvicorn
-scrapling
+scrapling[fetchers]
 curl_cffi
 playwright
 browserforge
+patchright
 lxml
 cssselect
