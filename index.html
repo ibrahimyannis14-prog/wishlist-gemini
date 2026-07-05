@@ -137,7 +137,12 @@
   .legend-label{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .legend-pct{font-family:var(--font-mono);font-size:11px;color:var(--muted-2);}
   .legend-value{font-family:var(--font-mono);font-size:12.5px;font-weight:700;min-width:64px;text-align:right;}
-  .tag-input-box{display:flex;flex-wrap:wrap;gap:7px;align-items:center; background:var(--bg-alt); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 10px;}
+  .tag-input-box{display:flex;flex-wrap:wrap;gap:7px;align-items:center; background:var(--bg-alt); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 10px; position:relative;}
+  .tag-suggestions{position:absolute; top:calc(100% + 6px); left:0; right:0; background:#fff; border:1px solid var(--line); border-radius:var(--radius-sm); box-shadow:var(--shadow-md); max-height:180px; overflow-y:auto; z-index:20; display:none;}
+  .tag-suggestions.open{display:block;}
+  .tag-suggestion-item{display:flex; align-items:center; gap:8px; padding:8px 12px; font-size:13px; cursor:pointer;}
+  .tag-suggestion-item:hover{background:var(--bg-alt);}
+  .tag-suggestion-dot{width:8px;height:8px;border-radius:50%;flex:none;}
   .tag-input-box input:not([type="checkbox"]):not([type="color"]){flex:1;min-width:120px;border:none;background:transparent;outline:none;font-size:13px;padding:0;}
   .tag-chip-editable{display:flex;align-items:center;gap:5px; padding:4px 6px 4px 10px; border-radius:999px; font-size:12px;font-weight:600;color:#fff;}
   .tag-chip-editable button{background:rgba(255,255,255,0.3);border:none;color:#fff; width:16px;height:16px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;}
@@ -167,7 +172,10 @@
     .total-card { padding: 24px; text-align: center; }
     .donut-wrap { flex-direction: column; align-items: center; gap: 24px; }
     .donut-legend { width: 100%; }
+    
+    /* FIX MOBILE ADDITIONNEL: SECURITÉ POUR S'ASSURER QUE CA FONCTIONNE MEME SI HOVER:NONE N'EST PAS DETECTE */
     .ic-icons { opacity: 1 !important; }
+    
     .new-cat { flex-direction: column; align-items: stretch; width: 100%; }
     .new-cat select, .new-cat input { max-width: 100%; width: 100%; margin-bottom: 5px; }
     .new-cat button { align-self: flex-end; }
@@ -186,6 +194,7 @@
       <span class="hero-eyebrow">Wishlist Partagée</span>
       <h1 class="hero-title">Ma liste de<br>vêtements</h1>
       <div class="io-actions">
+        <!-- APPEL DIRECT À LA FONCTION DE PARTAGE INFAILLIBLE -->
         <button class="share-badge" id="shareBtn" onclick="partagerListe()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           Partager cette liste
@@ -234,7 +243,8 @@
           <label class="field-title" for="f-tags-input">Étiquettes (couleur, boutique, occasion...)</label>
           <div class="tag-input-box" id="tagInputBox">
             <input type="color" id="f-tag-color" value="#D6409F" title="Couleur de l'étiquette">
-            <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée">
+            <input id="f-tags-input" type="text" placeholder="Tapez une étiquette et Entrée" autocomplete="off">
+            <div class="tag-suggestions" id="tagSuggestions"></div>
           </div>
         </div>
         <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main — vos modifications ne seront pas écrasées.</p>
@@ -284,6 +294,7 @@
   <footer>Les données sont sauvegardées en temps réel sur le cloud (Firebase).</footer>
 </div>
 
+<!-- LE SCRIPT DE PARTAGE INFAILLIBLE (Placé hors du module) -->
 <script>
   function partagerListe() {
     const url = window.location.href;
@@ -322,6 +333,11 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // ==========================================================================
+  // BACKEND DE SCRAPING (Python + Scrapling, hébergé sur Render)
+  // Remplacez cette URL par celle de votre service Render une fois déployé,
+  // ex : "https://wishlist-scraper.onrender.com"
+  // ==========================================================================
   const BACKEND_URL = "https://scraper-wishlist.onrender.com";
 
   let listId = new URLSearchParams(window.location.search).get('liste');
@@ -347,7 +363,12 @@
     {id:'chaussures', name:'Chaussures', parentId:null}, {id:'accessoires', name:'Accessoires', parentId:null}
   ].map((c, i) => ({ ...c, color: colorForIndex(i), locked: false }));
 
-  let state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: [], tagColors: {} };
+  // Catégories principales qui ont des sous-catégories : repliées par défaut
+  function defaultCollapsedCats(categories){
+    return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id);
+  }
+
+  let state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: defaultCollapsedCats(DEFAULT_CATEGORIES), tagColors: {} };
   let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0;
   let chartExcluded = new Set(); 
 
@@ -356,6 +377,7 @@
   function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML; }
   function formatPrice(n){ return (Number(n)||0).toLocaleString('fr-FR', {style:'currency', currency:'EUR'}); }
 
+  // FONCTIONS SVG
   function iconEdit(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`; }
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
   function iconHanger(color){ return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6"><circle cx="12" cy="4" r="1.6"/><path d="M12 6v2"/><path d="M2 20l8.5-6a2 2 0 012.9 0L22 20"/><path d="M2 20h20"/></svg>`; }
@@ -363,7 +385,7 @@
   function loadState(){
     onSnapshot(doc(db, "wishlists", listId), (docSnap) => {
       if (docSnap.exists()) { state = docSnap.data(); } 
-      else { state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: [], tagColors: {} }; saveState(); }
+      else { state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: defaultCollapsedCats(DEFAULT_CATEGORIES), tagColors: {} }; saveState(); }
       if(!state.collapsedCats) state.collapsedCats = []; if(!state.tagColors) state.tagColors = {};
       ensureDefaultCategories(); render();
     });
@@ -464,12 +486,48 @@
     const val = input.value.trim().replace(/,$/, ''); 
     if(val){ 
       if(!state.tagColors) state.tagColors = {};
-      state.tagColors[val] = colorInput.value;
+      if(!state.tagColors[val]) state.tagColors[val] = colorInput.value;
       if(!currentTags.includes(val)) currentTags.push(val); 
       saveState(); renderTagInputChips(); 
     } 
     input.value = ''; 
+    hideTagSuggestions();
   }
+
+  // --- Autocomplétion des étiquettes déjà créées (mémoire globale via state.tagColors) ---
+  function hideTagSuggestions(){
+    const box = document.getElementById('tagSuggestions');
+    box.innerHTML = ''; box.classList.remove('open');
+  }
+
+  function renderTagSuggestions(){
+    const input = document.getElementById('f-tags-input');
+    const box = document.getElementById('tagSuggestions');
+    const query = input.value.trim().toLowerCase();
+    if(!query){ hideTagSuggestions(); return; }
+    const known = Object.keys(state.tagColors || {});
+    const matches = known.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
+    if(matches.length === 0){ hideTagSuggestions(); return; }
+    box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join('');
+    box.classList.add('open');
+    box.querySelectorAll('[data-suggest]').forEach(el => {
+      // mousedown + preventDefault : évite que l'input perde le focus (blur) avant le clic,
+      // ce qui empêcherait le texte tapé d'être ajouté comme étiquette brute par erreur.
+      el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); });
+    });
+  }
+
+  function applyTagSuggestion(tag){
+    if(!currentTags.includes(tag)) currentTags.push(tag);
+    const input = document.getElementById('f-tags-input');
+    input.value = ''; input.focus();
+    hideTagSuggestions();
+    saveState(); renderTagInputChips();
+  }
+
+  document.getElementById('f-tags-input').addEventListener('input', renderTagSuggestions);
+  document.getElementById('f-tags-input').addEventListener('focus', renderTagSuggestions);
+  document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); });
 
   document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
   document.getElementById('f-tags-input').addEventListener('blur', () => { if(document.getElementById('f-tags-input').value.trim()) addTagFromInput(); });
