@@ -55,6 +55,19 @@ def parse_price_string(price_str: str):
         return None
 
 
+def _price_from_offer(offers: dict):
+    if not isinstance(offers, dict):
+        return None
+    price_raw = offers.get("price") or offers.get("lowPrice") or offers.get("highPrice")
+    if not price_raw:
+        spec = offers.get("priceSpecification")
+        if isinstance(spec, list):
+            spec = spec[0] if spec else {}
+        if isinstance(spec, dict):
+            price_raw = spec.get("price")
+    return parse_price_string(price_raw) if price_raw else None
+
+
 def extract_jsonld_product(response):
     """Cherche un bloc JSON-LD schema.org/Product — source la plus fiable quand elle existe."""
     scripts = response.css('script[type="application/ld+json"]::text').getall()
@@ -77,19 +90,27 @@ def extract_jsonld_product(response):
             types = item_type if isinstance(item_type, list) else [item_type]
             if "Product" in types:
                 offers = item.get("offers")
+                price = None
                 if isinstance(offers, list):
-                    offers = offers[0] if offers else {}
-                offers = offers or {}
+                    for o in offers:
+                        price = _price_from_offer(o)
+                        if price is not None:
+                            offers = o
+                            break
+                    else:
+                        offers = offers[0] if offers else {}
+                else:
+                    price = _price_from_offer(offers)
+                offers = offers if isinstance(offers, dict) else {}
                 image = item.get("image")
                 if isinstance(image, list):
                     image = image[0] if image else None
                 if isinstance(image, dict):
                     image = image.get("url")
-                price_raw = offers.get("price") or offers.get("lowPrice")
                 return {
                     "title": item.get("name"),
                     "image": image,
-                    "price": parse_price_string(price_raw) if price_raw else None,
+                    "price": price,
                     "availability": offers.get("availability", ""),
                 }
     return None
@@ -131,6 +152,20 @@ PRICE_CSS_CANDIDATES = [
 ]
 
 
+# Mots-clés indiquant que le prix trouvé n'est PAS le prix de l'article
+# (frais de port, paiement en plusieurs fois, prix barré, etc.)
+FALSE_POSITIVE_HINTS = [
+    'livraison', 'frais de port', 'expédition', 'shipping', 'delivery',
+    'klarna', 'mensualité', 'mensualités', 'paiement en', 'installment',
+    'fois de', 'x3', 'x4', 'acompte', 'retour', 'return',
+]
+
+
+def _has_false_positive_context(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(hint in lowered for hint in FALSE_POSITIVE_HINTS)
+
+
 def extract_price_from_dom(response):
     """Dernier recours : parcourt les sélecteurs CSS de prix communs, en excluant les prix barrés."""
     for selector in PRICE_CSS_CANDIDATES:
@@ -139,7 +174,6 @@ def extract_price_from_dom(response):
         except Exception:
             continue
         for el in elements:
-            # Vérifie que l'élément (ou un parent proche) n'a pas une classe d'"ancien prix"
             class_attr = ""
             try:
                 class_attr = (el.attrib.get('class', '') or '').lower()
@@ -147,7 +181,11 @@ def extract_price_from_dom(response):
                 pass
             if any(hint in class_attr for hint in EXCLUDE_PRICE_HINTS):
                 continue
+            if _has_false_positive_context(class_attr):
+                continue
             text = el.get() if hasattr(el, 'get') else str(el)
+            if _has_false_positive_context(text):
+                continue
             price = parse_price_string(text)
             if price is not None:
                 return price
@@ -155,7 +193,7 @@ def extract_price_from_dom(response):
 
 
 # Dernier recours absolu : cherche un motif de prix dans le texte brut de la page rendue
-PRICE_TEXT_PATTERN = re.compile(r'(\d{1,4}(?:[.,]\d{2})?)\s?(?:€|EUR)')
+PRICE_TEXT_PATTERN = re.compile(r'.{0,40}(\d{1,4}(?:[.,]\d{2})?)\s?(?:€|EUR).{0,10}')
 
 
 def extract_price_from_raw_text(response):
@@ -163,9 +201,11 @@ def extract_price_from_raw_text(response):
         full_text = response.get_all_text() if hasattr(response, 'get_all_text') else response.body.decode('utf-8', 'ignore')
     except Exception:
         return None
-    matches = PRICE_TEXT_PATTERN.findall(full_text or "")
-    for m in matches:
-        price = parse_price_string(m)
+    for match in PRICE_TEXT_PATTERN.finditer(full_text or ""):
+        context = match.group(0)
+        if _has_false_positive_context(context):
+            continue
+        price = parse_price_string(match.group(1))
         if price is not None:
             return price
     return None
@@ -255,7 +295,7 @@ def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper"
             print("[SCRAPE] Données incomplètes, tentative avec StealthyFetcher...")
             # network_idle + timeout élevé : certains sites (Nike, sites Next.js/React lourds)
             # chargent le prix via des appels API internes après le rendu initial.
-            response = StealthyFetcher().get(url, timeout=45000, network_idle=True, wait=3000)
+            response = StealthyFetcher().fetch(url, timeout=45000, network_idle=True, wait=3000)
             debug_info["stealthy_fetch"] = {"status": response.status, "html_length": len(response.body or b"")}
             data2 = extract_data(response, url)
             for key in ["title", "shop", "image", "price", "price_confidence"]:
