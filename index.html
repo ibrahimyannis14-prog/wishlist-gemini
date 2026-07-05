@@ -267,7 +267,7 @@
           Inviter un collaborateur
         </div>
         <!-- BOUTON SUPPRIMER -->
-        <div class="sidebar-item" id="deleteListBtn" onclick="deleteCurrentList()" style="display:none; color:var(--bad);">
+        <div class="sidebar-item" id="deleteListBtn" onclick="window.openDeleteModal()" style="display:none; color:var(--bad);">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           Supprimer la liste
         </div>
@@ -284,7 +284,7 @@
   <!-- CONTENU CENTRAL -->
   <main class="main-content">
     
-    <!-- VUE 1 : TABLEAU DE BORD (Centré horizontalement et verticalement) -->
+    <!-- VUE 1 : TABLEAU DE BORD -->
     <div class="page" id="dashboardView" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:calc(100vh - 120px); padding-bottom:0;">
       <h1 class="hero-title" style="margin-bottom: 10px;">Bienvenue sur ton espace</h1>
       <p style="color:var(--muted); margin:0;">Sélectionne une liste dans le menu de gauche ou crées-en une nouvelle.</p>
@@ -333,7 +333,7 @@
               </div>
               <div class="field-grid">
                 <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
-                <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="1" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
+                <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
                 <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
                 <div class="field">
                   <label class="field-title">Disponibilité</label>
@@ -398,7 +398,7 @@
           <div class="donut-wrap" id="shopChart"></div>
         </div>
       </div>
-      <footer>Les données sont sauvegardées en temps réel sur le cloud.</footer>
+      <footer>Les données sont sauvegardées en temps réel sur le cloud (Firebase).</footer>
     </div>
   </main>
 </div>
@@ -432,6 +432,21 @@
     <div style="text-align:center; font-size:12.5px; color:var(--muted);">
       <span id="authToggleText">Pas de compte ?</span> 
       <a href="#" id="authToggleLink" style="color:var(--accent); font-weight:600; text-decoration:none;">S'inscrire</a>
+    </div>
+  </div>
+</div>
+
+<!-- NOUVELLE MODALE DE CONFIRMATION DE SUPPRESSION -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-card" style="max-width: 400px; text-align: center;">
+    <button class="modal-close" onclick="window.closeDeleteModal()">✕</button>
+    <h2 style="font-family: var(--font-display); margin-top: 0; color: var(--bad);">Supprimer la liste ?</h2>
+    <p style="color: var(--muted); font-size: 13.5px; margin-bottom: 24px; line-height: 1.5;">
+      Cette action est définitive. Tous les articles de cette liste seront effacés et vous ne pourrez pas revenir en arrière.
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <button class="btn btn-ghost" onclick="window.closeDeleteModal()">Annuler</button>
+      <button class="btn btn-primary" style="background: var(--bad);" onclick="window.confirmDeleteList()">Oui, supprimer</button>
     </div>
   </div>
 </div>
@@ -488,10 +503,18 @@
       }
     }
   }
+
+  // --- Fonctions pour la modale de suppression ---
+  window.openDeleteModal = function() {
+    document.getElementById('deleteModal').classList.add('open');
+  }
+  
+  window.closeDeleteModal = function() {
+    document.getElementById('deleteModal').classList.remove('open');
+  }
 </script>
 
 <script type="module">
-  // IMPORT: Ajout de deleteDoc pour la suppression
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot, setDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -536,13 +559,10 @@
     }
   }
 
-  window.closeAuthModal = function() {
-    document.getElementById('authModal').classList.remove('open');
-  }
+  window.closeAuthModal = function() { document.getElementById('authModal').classList.remove('open'); }
 
   document.getElementById('authToggleLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    window.openAuthModal(authMode === 'login' ? 'signup' : 'login');
+    e.preventDefault(); window.openAuthModal(authMode === 'login' ? 'signup' : 'login');
   });
 
   document.getElementById('authSubmitBtn').addEventListener('click', async () => {
@@ -572,12 +592,8 @@
     const provider = new GoogleAuthProvider();
     const errEl = document.getElementById('authError');
     errEl.style.display = 'none';
-    try {
-      await signInWithPopup(auth, provider);
-      window.closeAuthModal();
-    } catch(error) {
-      if(error.code !== 'auth/popup-closed-by-user') { errEl.innerText = "Erreur Google : " + error.message; errEl.style.display = 'block'; }
-    }
+    try { await signInWithPopup(auth, provider); window.closeAuthModal(); } 
+    catch(error) { if(error.code !== 'auth/popup-closed-by-user') { errEl.innerText = "Erreur Google : " + error.message; errEl.style.display = 'block'; } }
   }
 
   onAuthStateChanged(auth, async (user) => {
@@ -629,20 +645,29 @@
   }
 
   // --- NOUVEAU : FONCTION DE SUPPRESSION DE LISTE ---
-  window.deleteCurrentList = async function() {
+  window.confirmDeleteList = async function() {
     if (!currentListId || !isOwner()) return; 
 
-    const confirmMsg = "Êtes-vous sûr de vouloir supprimer cette liste définitivement ? Cette action est irréversible.";
-    if (confirm(confirmMsg)) {
-      try {
-        await deleteDoc(doc(db, "wishlists", currentListId));
-        alert("Liste supprimée avec succès.");
-        window.showDashboard();
-        updateSidebarLists();
-      } catch (error) {
-        console.error("Erreur lors de la suppression de la liste :", error);
-        alert("Une erreur est survenue lors de la suppression de la liste.");
+    try {
+      // TRÈS IMPORTANT : On arrête d'écouter la base de données AVANT de supprimer
+      // Sinon l'appli voit que le fichier est vide et le recrée instantanément
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
       }
+      
+      // Suppression sur Firebase
+      await deleteDoc(doc(db, "wishlists", currentListId));
+      
+      // Nettoyage de l'interface
+      window.closeDeleteModal();
+      currentListId = null;
+      window.showDashboard();
+      updateSidebarLists();
+      
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la liste :", error);
+      alert("Une erreur est survenue lors de la suppression de la liste.");
     }
   }
 
@@ -762,7 +787,6 @@
     document.getElementById('visitorBanner').style.display = (!editMode && state.ownerId) ? 'block' : 'none';
     document.getElementById('collabBanner').style.display = collabMode ? 'block' : 'none';
     
-    // Gérer la visibilité des boutons d'invitation et de suppression (uniquement pour le proprio)
     document.getElementById('inviteBtn').style.display = ownerMode ? 'flex' : 'none';
     document.getElementById('deleteListBtn').style.display = ownerMode ? 'flex' : 'none';
     
