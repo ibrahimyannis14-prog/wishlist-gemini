@@ -521,6 +521,10 @@
         document.getElementById('visitorBanner').style.display = 'none';
         document.querySelector('.owner-num').textContent = "01";
         document.querySelector('.owner-num-last').textContent = "02";
+        
+        // --- NOUVEAU : On force l'ouverture de la modale d'inscription ---
+        window.openAuthModal('signup');
+        
         return; // On arrête l'affichage normal
       }
     }
