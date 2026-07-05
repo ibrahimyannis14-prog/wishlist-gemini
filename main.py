@@ -135,29 +135,31 @@ def extract_price_from_meta(response):
 # Classes/attributs à exclure car ils indiquent presque toujours un ANCIEN prix barré
 EXCLUDE_PRICE_HINTS = ['old', 'strike', 'before', 'was', 'compare', 'crossed', 'original', 'barre', 'raye']
 
-# Sélecteurs CSS génériques utilisés par la grande majorité des boutiques en ligne
+# Sélecteurs CSS génériques utilisés par la grande majorité des boutiques en ligne,
+# classés du plus spécifique/fiable au plus générique.
+# (les sélecteurs [data-price]/[attr] sont volontairement exclus : aucune valeur
+# textuelle de contexte à côté pour détecter un faux positif comme les frais de port)
 PRICE_CSS_CANDIDATES = [
-    '[data-price]::attr(data-price)',
-    '[data-product-price]::attr(data-product-price)',
+    '.a-price .a-offscreen::text',   # Amazon
     '.product-price::text',
     '.current-price::text',
     '.price-current::text',
     '.sale-price::text',
     '.price__current::text',
     '.price-sales::text',
-    '.a-price .a-offscreen::text',   # Amazon
     '[class*="ProductPrice"]::text',
     '[class*="price"]::text',
     'span:contains("€")::text',
 ]
 
 
-# Mots-clés indiquant que le prix trouvé n'est PAS le prix de l'article
-# (frais de port, paiement en plusieurs fois, prix barré, etc.)
+# Mots-clés (expressions précises, pas de mots isolés ambigus) indiquant que le prix
+# trouvé est un frais de livraison / paiement fractionné, PAS le prix de l'article.
 FALSE_POSITIVE_HINTS = [
-    'livraison', 'frais de port', 'expédition', 'shipping', 'delivery',
-    'klarna', 'mensualité', 'mensualités', 'paiement en', 'installment',
-    'fois de', 'x3', 'x4', 'acompte', 'retour', 'return',
+    'frais de livraison', 'frais de port', 'livraison standard', 'livraison express',
+    'livraison gratuite dès', 'shipping fee', 'delivery fee', 'klarna',
+    'paiement en plusieurs fois', 'paiement en 3x', 'paiement en 4x',
+    'mensualité', 'mensualités', 'installment',
 ]
 
 
