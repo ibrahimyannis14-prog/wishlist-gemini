@@ -356,6 +356,7 @@
               </div>
               <p class="hint" id="imgHint">Photo, boutique, repère, prix et disponibilité sont récupérés automatiquement (scraping via notre backend Python). Vous pouvez toujours corriger les champs à la main.</p>
               
+              <!-- NOUVELLE SECTION IMAGE MANUELLE AVEC OPTION UPLOAD NATIVE -->
               <div class="field" id="manualImgField" style="margin-top:10px;">
                 <label class="field-title">Image personnalisée (remplace le scraping)</label>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -425,12 +426,9 @@
       <label class="field-title">Email</label>
       <input type="email" id="authEmail" placeholder="votre@email.com">
     </div>
-    <div class="field" style="margin-bottom:8px;">
+    <div class="field" style="margin-bottom:24px;">
       <label class="field-title">Mot de passe</label>
       <input type="password" id="authPassword" placeholder="••••••••">
-    </div>
-    <div id="forgotPasswordDiv" style="text-align: right; margin-bottom: 16px;">
-      <a href="#" onclick="window.resetPassword()" style="font-size: 11px; color: var(--muted); text-decoration: none;">Mot de passe oublié ?</a>
     </div>
     <p id="authError" style="color:var(--bad); font-size:12.5px; display:none; margin-top:-10px; margin-bottom:14px; line-height:1.4;"></p>
     <button class="btn btn-primary" style="width:100%; margin-bottom:14px;" id="authSubmitBtn">Se connecter</button>
@@ -551,9 +549,10 @@
 </script>
 
 <script type="module">
+  // IMPORTS FIREBASE STORAGE AJOUTÉS
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, deleteUser, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   const firebaseConfig = {
@@ -569,12 +568,12 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const storage = getStorage(app); 
+  const storage = getStorage(app); // Initialisation de Storage
   const BACKEND_URL = "https://scraper-wishlist.onrender.com";
 
   let currentListId = null;
   let inviteInterval = null;
-  let selectedImageFile = null; 
+  let selectedImageFile = null; // Variable pour stocker le fichier natif
 
   document.getElementById('confirmBtn').addEventListener('click', async () => {
     if(confirmAction) {
@@ -603,36 +602,11 @@
   window.openAuthModal = function(mode = 'login') {
     authMode = mode; document.getElementById('authModal').classList.add('open'); document.getElementById('authError').style.display = 'none';
     document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
-    if(mode === 'login') { 
-        document.getElementById('authTitle').innerText = 'Connexion'; document.getElementById('authSubmitBtn').innerText = 'Se connecter'; document.getElementById('authToggleText').innerText = 'Pas de compte ?'; document.getElementById('authToggleLink').innerText = "S'inscrire"; 
-        document.getElementById('forgotPasswordDiv').style.display = 'block';
-    } else { 
-        document.getElementById('authTitle').innerText = 'Créer un compte'; document.getElementById('authSubmitBtn').innerText = "S'inscrire"; document.getElementById('authToggleText').innerText = 'Déjà un compte ?'; document.getElementById('authToggleLink').innerText = "Se connecter"; 
-        document.getElementById('forgotPasswordDiv').style.display = 'none';
-    }
+    if(mode === 'login') { document.getElementById('authTitle').innerText = 'Connexion'; document.getElementById('authSubmitBtn').innerText = 'Se connecter'; document.getElementById('authToggleText').innerText = 'Pas de compte ?'; document.getElementById('authToggleLink').innerText = "S'inscrire"; } 
+    else { document.getElementById('authTitle').innerText = 'Créer un compte'; document.getElementById('authSubmitBtn').innerText = "S'inscrire"; document.getElementById('authToggleText').innerText = 'Déjà un compte ?'; document.getElementById('authToggleLink').innerText = "Se connecter"; }
   }
   window.closeAuthModal = function() { document.getElementById('authModal').classList.remove('open'); }
   document.getElementById('authToggleLink').addEventListener('click', (e) => { e.preventDefault(); window.openAuthModal(authMode === 'login' ? 'signup' : 'login'); });
-
-  // --- REINITIALISATION DE MOT DE PASSE ---
-  window.resetPassword = async function() {
-    const email = document.getElementById('authEmail').value.trim();
-    const errEl = document.getElementById('authError');
-    errEl.style.display = 'none';
-    if(!email) {
-        errEl.innerText = "Veuillez entrer votre email dans le champ ci-dessus d'abord.";
-        errEl.style.display = 'block';
-        return;
-    }
-    try {
-        await sendPasswordResetEmail(auth, email);
-        window.showToast("Email de réinitialisation envoyé ! Vérifiez votre boîte mail.");
-        window.closeAuthModal();
-    } catch(e) {
-        errEl.innerText = "Erreur : " + e.message;
-        errEl.style.display = 'block';
-    }
-  }
 
   document.getElementById('authSubmitBtn').addEventListener('click', async () => {
     const email = document.getElementById('authEmail').value.trim(); const password = document.getElementById('authPassword').value;
@@ -929,6 +903,31 @@
   function findCategory(id){ return state.categories.find(c => c.id === id) || (state.categories.length > 0 ? state.categories[0] : {id:'error', name:'Erreur', color:'#000', locked:false}); }
   function ensureDefaultCategories(){ DEFAULT_CATEGORIES.forEach(dc => { if(!state.categories.find(c => c.id === dc.id)) state.categories.push({...dc}); }); }
 
+  async function fetchPreview(url) {
+    const token = ++fetchToken; const box = document.getElementById('previewBox');
+    box.innerHTML = `<div style="text-align:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--muted-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg><br><span style="font-size:10px;color:var(--muted);display:block;margin-top:8px;">Scraping...</span></div><style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>`;
+    fetchedImage = null;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/scrape?url=${encodeURIComponent(url)}`);
+      if (!res.ok) throw new Error('Erreur backend');
+      const itemData = await res.json();
+      if (token !== fetchToken) return;
+      if (itemData) {
+        if (itemData.image) { fetchedImage = itemData.image; box.innerHTML = `<img src="${escapeHtml(itemData.image)}" alt="Aperçu"><span class="preview-status">Photo trouvée ✓</span>`; } 
+        else { box.innerHTML = `<span class="preview-placeholder">Pas de photo trouvée</span>`; }
+        const shopField = document.getElementById('f-shop'); if (!shopField.dataset.touched && itemData.shop) shopField.value = itemData.shop;
+        const noteField = document.getElementById('f-note'); if (!noteField.value && itemData.title) noteField.value = itemData.title.slice(0, 80);
+        const priceField = document.getElementById('f-price'); const priceHint = document.getElementById('priceHint');
+        if (!priceField.dataset.touched) {
+          if (typeof itemData.price === 'number') { priceField.value = itemData.price; if (priceHint) { if (itemData.price_confidence === 'low') { priceHint.textContent = '⚠️ Prix estimé'; priceHint.style.display = 'block'; } else { priceHint.style.display = 'none'; } } } 
+          else if (priceHint) { priceHint.textContent = 'ℹ️ Prix non détecté'; priceHint.style.display = 'block'; }
+        }
+        const availCheckbox = document.getElementById('f-avail-rupture'); if (!availCheckbox.dataset.touched && itemData.availability === 'outofstock') availCheckbox.checked = true;
+      } else throw new Error(itemData.error);
+    } catch(e) { if (token !== fetchToken) return; box.innerHTML = `<span class="preview-placeholder" style="color:var(--bad);">Échec du scraping.</span>`; }
+  }
+
+  let urlDebounce;
   document.getElementById('f-url').addEventListener('input', (e) => {
     const shopField = document.getElementById('f-shop'); if(!shopField.dataset.touched){ const guess = guessShopFromUrl(e.target.value); if(guess) shopField.value = guess; }
     clearTimeout(urlDebounce); const val = e.target.value.trim();
@@ -940,27 +939,91 @@
   document.getElementById('f-price').addEventListener('input', (e) => { e.target.dataset.touched = '1'; const ph = document.getElementById('priceHint'); if(ph) ph.style.display = 'none'; });
   document.getElementById('f-avail-rupture').addEventListener('change', (e) => { e.target.dataset.touched = '1'; });
   
+  // --- GESTION IMAGE MANUELLE (URL HTTP) ---
   document.getElementById('f-image').addEventListener('input', (e) => { 
     const val = e.target.value.trim(); 
     if(val){ 
         fetchedImage = val; 
         selectedImageFile = null; 
-        document.getElementById('f-image-file').value = ''; 
+        document.getElementById('f-image-file').value = ''; // Réinitialise l'input file
         document.getElementById('previewBox').innerHTML = `<img src="${escapeHtml(val)}" alt="Aperçu" onerror="this.src=''; this.alt='Lien invalide';"><span class="preview-status">URL manuelle</span>`; 
     } 
   });
 
+  // --- GESTION IMAGE NATIVE (FICHIER LOCAL) ---
   document.getElementById('f-image-file').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if(file) {
         selectedImageFile = file;
         fetchedImage = null; 
-        document.getElementById('f-image').value = ''; 
+        document.getElementById('f-image').value = ''; // Réinitialise l'input URL
         const localUrl = URL.createObjectURL(file);
         document.getElementById('previewBox').innerHTML = `<img src="${escapeHtml(localUrl)}" alt="Aperçu"><span class="preview-status">Fichier local</span>`;
     }
   });
 
+  function renderTagInputChips(){
+    const box = document.getElementById('tagInputBox'); const input = document.getElementById('f-tags-input');
+    box.querySelectorAll('.tag-chip-editable').forEach(el => el.remove());
+    currentTags.forEach(tag => {
+      const chip = document.createElement('span'); chip.className = 'tag-chip-editable'; chip.style.background = tagColor(tag);
+      chip.innerHTML = `${escapeHtml(tag)} <button type="button" data-tag="${escapeHtml(tag)}">✕</button>`;
+      box.insertBefore(chip, input);
+    });
+    box.querySelectorAll('[data-tag]').forEach(btn => { btn.addEventListener('click', () => { currentTags = currentTags.filter(t => t !== btn.dataset.tag); renderTagInputChips(); }); });
+  }
+
+  function addTagFromInput(){ 
+    const input = document.getElementById('f-tags-input'); const colorInput = document.getElementById('f-tag-color'); const val = input.value.trim().replace(/,$/, ''); 
+    if(val){ 
+      if(!state.tagColors) state.tagColors = {}; if(!state.tagColors[val]) state.tagColors[val] = colorInput.value;
+      if(!currentTags.includes(val)) currentTags.push(val); 
+      saveState(); renderTagInputChips(); 
+    } 
+    input.value = ''; hideTagSuggestions();
+  }
+
+  function hideTagSuggestions(){ const box = document.getElementById('tagSuggestions'); box.innerHTML = ''; box.classList.remove('open'); }
+  function renderTagSuggestions(){
+    const input = document.getElementById('f-tags-input'); const box = document.getElementById('tagSuggestions'); const query = input.value.trim().toLowerCase();
+    if(!query){ hideTagSuggestions(); return; }
+    const allKnownTags = [...new Set([...Object.keys(state.tagColors || {}), ...state.items.flatMap(i => i.tags || [])])];
+    const matches = allKnownTags.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
+    if(matches.length === 0){ hideTagSuggestions(); return; }
+    box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join(''); box.classList.add('open');
+    box.querySelectorAll('[data-suggest]').forEach(el => { el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); }); });
+  }
+
+  function applyTagSuggestion(tag){ if(!currentTags.includes(tag)) currentTags.push(tag); const input = document.getElementById('f-tags-input'); input.value = ''; input.focus(); hideTagSuggestions(); saveState(); renderTagInputChips(); }
+  document.getElementById('f-tags-input').addEventListener('input', renderTagSuggestions); document.getElementById('f-tags-input').addEventListener('focus', renderTagSuggestions);
+  document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
+  document.getElementById('f-tags-input').addEventListener('blur', () => { setTimeout(hideTagSuggestions, 150); });
+
+  function renderCategorySelect(){
+    const sel = document.getElementById('f-cat'); let html = '';
+    if (state.categories.length === 0) { html = `<option value="">Aucune</option>`; } 
+    else { getTopLevelCategories().forEach(top => { const children = getChildren(top.id); if(children.length){ html += `<optgroup label="${escapeHtml(top.name)}"><option value="${top.id}">${escapeHtml(top.name)} (général)</option>${children.map(c => `<option value="${c.id}">— ${escapeHtml(c.name)}</option>`).join('')}</optgroup>`; } else { html += `<option value="${top.id}">${escapeHtml(top.name)}</option>`; } }); }
+    sel.innerHTML = html;
+  }
+
+  function resetForm(){
+    document.getElementById('f-url').value = ''; document.getElementById('f-shop').value = ''; document.getElementById('f-shop').dataset.touched = '';
+    document.getElementById('f-price').value = ''; document.getElementById('f-price').dataset.touched = ''; document.getElementById('f-size').value = ''; const priceHintReset = document.getElementById('priceHint'); if(priceHintReset) priceHintReset.style.display = 'none';
+    document.getElementById('f-avail-rupture').checked = false; document.getElementById('f-avail-rupture').dataset.touched = '';
+    document.getElementById('f-cat').value = state.categories.length ? state.categories[0].id : ''; document.getElementById('f-note').value = ''; document.getElementById('f-image').value = '';
+    document.getElementById('previewBox').innerHTML = `<span class="preview-placeholder">La photo apparaîtra ici</span>`;
+    
+    // Nettoyage des images en cours
+    fetchedImage = null; 
+    selectedImageFile = null; 
+    document.getElementById('f-image-file').value = ''; 
+    
+    currentTags = []; renderTagInputChips(); editingId = null;
+    document.getElementById('submitBtn').textContent = 'Ajouter à la liste'; document.getElementById('cancelEdit').style.display = 'none';
+  }
+  document.getElementById('cancelEdit').addEventListener('click', resetForm);
+
+  // --- LOGIQUE D'ENREGISTREMENT MODIFIEE POUR GERER L'UPLOAD ---
   document.getElementById('submitBtn').addEventListener('click', async () => {
     if(!canEdit()) return; 
     const url = document.getElementById('f-url').value.trim(), shop = document.getElementById('f-shop').value.trim(), price = parseFloat(document.getElementById('f-price').value);
@@ -968,10 +1031,16 @@
     let cat = document.getElementById('f-cat').value; if (!cat && state.categories.length > 0) cat = state.categories[0].id; const note = document.getElementById('f-note').value.trim();
     if(!url || !shop || isNaN(price)){ window.showToast('Veuillez renseigner le lien, la boutique et le prix.', true); return; }
     
-    const btn = document.getElementById('submitBtn'); const origText = btn.textContent; btn.textContent = "Traitement..."; btn.disabled = true;
+    const btn = document.getElementById('submitBtn');
+    const origText = btn.textContent;
+    btn.textContent = "Traitement...";
+    btn.disabled = true;
 
     try {
+        // Priorité des images: 1. Fichier local en attente d'upload, 2. URL rentrée manuellement, 3. Image scrapée
         let finalImage = fetchedImage || document.getElementById('f-image').value.trim() || null;
+        
+        // S'il y a un fichier en attente, on l'upload d'abord
         if(selectedImageFile) {
             btn.textContent = "Envoi de l'image...";
             const ext = selectedImageFile.name.split('.').pop();
@@ -990,8 +1059,19 @@
             state.items.push({ id: uid(), url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: finalImage, addedAt: Date.now() }); 
             window.showToast("Article ajouté"); 
         }
-        saveState(); resetForm(); render(); updateSidebarLists();
-    } catch (err) { console.error(err); window.showToast("Une erreur est survenue lors de l'enregistrement.", true); } finally { btn.textContent = origText; btn.disabled = false; }
+        
+        saveState(); 
+        resetForm(); 
+        render(); 
+        updateSidebarLists();
+        
+    } catch (err) {
+        console.error(err);
+        window.showToast("Une erreur est survenue lors de l'enregistrement.", true);
+    } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+    }
   });
 
   window.startEdit = function(id){
@@ -1002,11 +1082,20 @@
     document.getElementById('f-price').value = item.price; document.getElementById('f-price').dataset.touched = '1'; document.getElementById('f-size').value = item.size; 
     document.getElementById('f-avail-rupture').checked = (item.availability === 'Rupture'); document.getElementById('f-avail-rupture').dataset.touched = '1';
     document.getElementById('f-cat').value = item.categoryId; document.getElementById('f-note').value = item.note || ''; currentTags = [...(item.tags || [])];
-    renderTagInputChips(); fetchedImage = item.image || null; selectedImageFile = null; document.getElementById('f-image-file').value = ''; document.getElementById('f-image').value = item.image || '';
+    renderTagInputChips(); 
+    
+    // Reset inputs manuels lors de l'édition
+    fetchedImage = item.image || null; 
+    selectedImageFile = null;
+    document.getElementById('f-image-file').value = '';
+    document.getElementById('f-image').value = item.image || '';
+    
     if(item.image) document.getElementById('previewBox').innerHTML = `<img src="${escapeHtml(item.image)}" alt="Aperçu"><span class="preview-status">Photo</span>`;
     document.getElementById('submitBtn').textContent = 'Enregistrer'; document.getElementById('cancelEdit').style.display = 'inline-block';
     document.querySelector('.panel').scrollIntoView({behavior: 'smooth', block: 'center'});
   }
+  
+  document.getElementById('searchInput').addEventListener('input', render);
 
   function renderCatChip(cat, isSub, hasChildren = false, ownerMode = false){ 
     const active = activeCategoryFilter === cat.id; const isCollapsed = localCollapsedCats.includes(cat.id);
@@ -1115,8 +1204,6 @@
   }
 
   document.querySelectorAll('.toggle-btn').forEach(btn => { btn.addEventListener('click', () => { chartMode = btn.dataset.chartmode; chartExcluded.clear(); document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn)); renderSummary(); }); });
-  document.getElementById('searchInput').addEventListener('input', render);
-  
   function render(){ if(canEdit()) renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
   
   // --- DEMARRAGE DE L'APP ---
