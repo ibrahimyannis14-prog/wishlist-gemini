@@ -43,8 +43,15 @@
   .stat{background:var(--bg-alt); border-radius:var(--radius-md); padding:14px 20px; min-width:96px;}
   .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; display:block;}
   .stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;}
+  
+  /* --- STYLES DES BOUTONS DE PARTAGE --- */
   .share-badge { background: var(--accent-soft); color: var(--accent-ink); padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--accent); cursor: pointer; transition: background 0.2s;}
   .share-badge:hover { background: var(--accent); color: white; }
+  
+  .invite-badge { background: var(--ok-soft); color: #0B7A5A; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ok); cursor: pointer; transition: background 0.2s;}
+  .invite-badge:hover { background: var(--ok); color: white; }
+  /* ------------------------------------- */
+
   .section-head{display:flex; align-items:center; gap:12px; margin:52px 0 20px;}
   .section-head .num{font-family:var(--font-mono); background:var(--ink); color:#fff; font-size:11px; padding:3px 8px; border-radius:20px; flex:none;}
   .section-head h2{font-family:var(--font-display); font-weight:600; font-size:20px; margin:0; flex:none;}
@@ -241,9 +248,16 @@
       <span class="hero-eyebrow">Wishlist Partagée</span>
       <h1 class="hero-title">Ma liste de<br>vêtements</h1>
       <div class="io-actions">
+        <!-- Bouton de Partage Classique -->
         <button class="share-badge" id="shareBtn" onclick="partagerListe()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           Partager cette liste
+        </button>
+        
+        <!-- NOUVEAU : Bouton d'invitation à collaborer (caché par défaut) -->
+        <button class="invite-badge" id="inviteBtn" onclick="inviterAmi()" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+          Inviter un ami à collaborer
         </button>
       </div>
     </div>
@@ -345,16 +359,38 @@
 
 <script>
   function partagerListe() {
-    const url = window.location.href;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('invite'); // On s'assure de ne pas donner le lien d'invitation par erreur ici
+    const cleanUrl = url.toString();
+    
     if (navigator.share) {
-      navigator.share({ title: 'Ma Wishlist Partagée', url: url }).catch(e => console.log("Partage annulé"));
+      navigator.share({ title: 'Ma Wishlist Partagée', url: cleanUrl }).catch(e => console.log("Partage annulé"));
     } else {
       try {
-        navigator.clipboard.writeText(url).then(() => alert("✅ Lien copié dans le presse-papier !"));
+        navigator.clipboard.writeText(cleanUrl).then(() => alert("✅ Lien de lecture copié dans le presse-papier !"));
       } catch (err) {
-        const input = document.createElement('input'); input.value = url;
+        const input = document.createElement('input'); input.value = cleanUrl;
         document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
-        alert("✅ Lien copié dans le presse-papier !");
+        alert("✅ Lien de lecture copié dans le presse-papier !");
+      }
+    }
+  }
+
+  // --- NOUVEAU : Fonction pour inviter un collaborateur ---
+  function inviterAmi() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('invite', 'true'); // On ajoute le paramètre secret
+    const inviteUrl = url.toString();
+    
+    if (navigator.share) {
+      navigator.share({ title: 'Invitation à collaborer', url: inviteUrl }).catch(e => console.log("Partage annulé"));
+    } else {
+      try {
+        navigator.clipboard.writeText(inviteUrl).then(() => alert("✅ Lien d'invitation copié ! Envoyez-le à la personne avec qui vous voulez collaborer."));
+      } catch (err) {
+        const input = document.createElement('input'); input.value = inviteUrl;
+        document.body.appendChild(input); input.select(); document.execCommand('copy'); document.body.removeChild(input);
+        alert("✅ Lien d'invitation copié ! Envoyez-le à la personne avec qui vous voulez collaborer.");
       }
     }
   }
@@ -389,7 +425,7 @@
 
   // --- LOGIQUE AUTHENTIFICATION ---
   let currentUser = null;
-  let authMode = 'login'; // 'login' ou 'signup'
+  let authMode = 'login'; 
 
   window.openAuthModal = function(mode = 'login') {
     authMode = mode;
@@ -501,7 +537,7 @@
     return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id);
   }
 
-  let state = { ownerId: null, categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
+  let state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
   let localCollapsedCats = []; 
   let hasInitCats = false;
   let isStateLoaded = false;
@@ -537,6 +573,7 @@
         document.getElementById('racks').innerHTML = `<div class="global-empty"><strong>Création de liste</strong><p style="margin-bottom:16px;">Veuillez vous connecter ou créer un compte gratuit pour créer et conserver cette liste.</p><button class="btn btn-primary" onclick="window.openAuthModal('signup')">Créer mon compte</button></div>`;
         document.getElementById('ownerAddSection').style.display = 'none';
         document.getElementById('visitorBanner').style.display = 'none';
+        document.getElementById('inviteBtn').style.display = 'none';
         document.querySelector('.owner-num').textContent = "01";
         document.querySelector('.owner-num-last').textContent = "02";
         
@@ -549,6 +586,9 @@
     document.getElementById('ownerAddSection').style.display = ownerMode ? 'block' : 'none';
     document.getElementById('visitorBanner').style.display = (!ownerMode && state.ownerId) ? 'block' : 'none';
     
+    // NOUVEAU : Affichage du bouton inviter seulement si on est le propriétaire
+    document.getElementById('inviteBtn').style.display = ownerMode ? 'inline-flex' : 'none';
+    
     document.querySelector('.owner-num').textContent = ownerMode ? "02" : "01";
     document.querySelector('.owner-num-last').textContent = ownerMode ? "03" : "02";
 
@@ -560,9 +600,11 @@
     onSnapshot(doc(db, "wishlists", listId), (docSnap) => {
       isStateLoaded = true;
       if (docSnap.exists()) { state = docSnap.data(); } 
-      else { state = { ownerId: null, categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
+      else { state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
       
       if(!state.tagColors) state.tagColors = {};
+      if(!state.collaborators) state.collaborators = []; // On s'assure que le tableau existe
+      
       ensureDefaultCategories(); 
       
       if(!hasInitCats) {
