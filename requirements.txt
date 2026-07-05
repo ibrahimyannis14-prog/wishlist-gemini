@@ -4,3 +4,5 @@ scrapling
 curl_cffi
 playwright
 browserforge
+lxml
+cssselect
