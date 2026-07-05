@@ -333,11 +333,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // ==========================================================================
-  // BACKEND DE SCRAPING (Python + Scrapling, hébergé sur Render)
-  // Remplacez cette URL par celle de votre service Render une fois déployé,
-  // ex : "https://wishlist-scraper.onrender.com"
-  // ==========================================================================
   const BACKEND_URL = "https://scraper-wishlist.onrender.com";
 
   let listId = new URLSearchParams(window.location.search).get('liste');
@@ -363,12 +358,14 @@
     {id:'chaussures', name:'Chaussures', parentId:null}, {id:'accessoires', name:'Accessoires', parentId:null}
   ].map((c, i) => ({ ...c, color: colorForIndex(i), locked: false }));
 
-  // Catégories principales qui ont des sous-catégories : repliées par défaut
   function defaultCollapsedCats(categories){
     return categories.filter(c => !c.parentId && categories.some(child => child.parentId === c.id)).map(c => c.id);
   }
 
-  let state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: defaultCollapsedCats(DEFAULT_CATEGORIES), tagColors: {} };
+  let state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
+  let localCollapsedCats = []; // Gestion locale et privée du repliage des catégories
+  let hasInitCats = false;
+
   let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0;
   let chartExcluded = new Set(); 
 
@@ -377,7 +374,6 @@
   function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML; }
   function formatPrice(n){ return (Number(n)||0).toLocaleString('fr-FR', {style:'currency', currency:'EUR'}); }
 
-  // FONCTIONS SVG
   function iconEdit(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`; }
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
   function iconHanger(color){ return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6"><circle cx="12" cy="4" r="1.6"/><path d="M12 6v2"/><path d="M2 20l8.5-6a2 2 0 012.9 0L22 20"/><path d="M2 20h20"/></svg>`; }
@@ -385,9 +381,16 @@
   function loadState(){
     onSnapshot(doc(db, "wishlists", listId), (docSnap) => {
       if (docSnap.exists()) { state = docSnap.data(); } 
-      else { state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], collapsedCats: defaultCollapsedCats(DEFAULT_CATEGORIES), tagColors: {} }; saveState(); }
-      if(!state.collapsedCats) state.collapsedCats = []; if(!state.tagColors) state.tagColors = {};
-      ensureDefaultCategories(); render();
+      else { state = { categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; saveState(); }
+      if(!state.tagColors) state.tagColors = {};
+      ensureDefaultCategories(); 
+      
+      // On replie par défaut uniquement au premier chargement de la page pour ne pas perturber l'utilisateur ensuite
+      if(!hasInitCats) {
+        localCollapsedCats = defaultCollapsedCats(state.categories);
+        hasInitCats = true;
+      }
+      render();
     });
   }
 
@@ -434,7 +437,7 @@
           noteField.value = itemData.title.slice(0, 80);
         }
 
-        // Prix (rempli seulement si le champ n'a pas déjà été modifié à la main)
+        // Prix
         const priceField = document.getElementById('f-price');
         if (!priceField.dataset.touched && typeof itemData.price === 'number') {
           priceField.value = itemData.price;
@@ -494,7 +497,6 @@
     hideTagSuggestions();
   }
 
-  // --- Autocomplétion des étiquettes déjà créées (mémoire globale via state.tagColors) ---
   function hideTagSuggestions(){
     const box = document.getElementById('tagSuggestions');
     box.innerHTML = ''; box.classList.remove('open');
@@ -505,14 +507,19 @@
     const box = document.getElementById('tagSuggestions');
     const query = input.value.trim().toLowerCase();
     if(!query){ hideTagSuggestions(); return; }
-    const known = Object.keys(state.tagColors || {});
-    const matches = known.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
+    
+    // NOUVEAU: Récupère TOUTES les étiquettes (celles avec couleurs manuelles + celles de tous les vêtements existants)
+    const allKnownTags = [...new Set([
+      ...Object.keys(state.tagColors || {}),
+      ...state.items.flatMap(i => i.tags || [])
+    ])];
+
+    const matches = allKnownTags.filter(t => t.toLowerCase().includes(query) && !currentTags.includes(t)).slice(0, 6);
     if(matches.length === 0){ hideTagSuggestions(); return; }
     box.innerHTML = matches.map(t => `<div class="tag-suggestion-item" data-suggest="${escapeHtml(t)}"><span class="tag-suggestion-dot" style="background:${tagColor(t)}"></span>${escapeHtml(t)}</div>`).join('');
     box.classList.add('open');
     box.querySelectorAll('[data-suggest]').forEach(el => {
-      // mousedown + preventDefault : évite que l'input perde le focus (blur) avant le clic,
-      // ce qui empêcherait le texte tapé d'être ajouté comme étiquette brute par erreur.
+      // Le preventDefault empêche l'input de perdre le focus (ce qui casserait la suggestion)
       el.addEventListener('mousedown', (e) => { e.preventDefault(); applyTagSuggestion(el.dataset.suggest); });
     });
   }
@@ -530,7 +537,11 @@
   document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Escape') hideTagSuggestions(); });
 
   document.getElementById('f-tags-input').addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTagFromInput(); } });
-  document.getElementById('f-tags-input').addEventListener('blur', () => { if(document.getElementById('f-tags-input').value.trim()) addTagFromInput(); });
+  
+  // NOUVEAU: Simplification du 'blur' pour ne plus interférer avec les clics sur les boutons
+  document.getElementById('f-tags-input').addEventListener('blur', () => { 
+    setTimeout(hideTagSuggestions, 150); 
+  });
 
   function renderCategorySelect(){
     const sel = document.getElementById('f-cat'); let html = '';
@@ -559,7 +570,10 @@
     if (!cat && state.categories.length > 0) cat = state.categories[0].id;
     const note = document.getElementById('f-note').value.trim();
     if(!url || !shop || isNaN(price)){ alert('Merci de renseigner au moins le lien, la boutique et le prix.'); return; }
-    if(currentTags.length === 0 && document.getElementById('f-tags-input').value.trim()) addTagFromInput();
+    
+    // NOUVEAU: Si on a tapé un texte dans le champ des étiquettes et qu'on clique sur "ajouter", ça crée l'étiquette.
+    if(document.getElementById('f-tags-input').value.trim()) addTagFromInput();
+    
     const tags = [...currentTags];
     if(editingId){ Object.assign(state.items.find(i => i.id === editingId), {url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null}); } 
     else { state.items.push({ id: uid(), url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: fetchedImage || null, addedAt: Date.now() }); }
@@ -592,7 +606,8 @@
   document.getElementById('searchInput').addEventListener('input', render);
 
   function renderCatChip(cat, isSub, hasChildren = false){ 
-    const active = activeCategoryFilter === cat.id; const isCollapsed = state.collapsedCats.includes(cat.id);
+    const active = activeCategoryFilter === cat.id; 
+    const isCollapsed = localCollapsedCats.includes(cat.id);
     const expandBtn = hasChildren ? `<span class="cat-expand ${isCollapsed?'collapsed':''}" data-togglecat="${cat.id}">▼</span>` : '';
     const delBtn = `<span class="chip-del" data-delcat="${cat.id}">✕</span>`;
     return `<button class="chip ${active?'active':''} ${isSub?'chip-sub':''}" data-filter="${cat.id}"><span class="dot" style="background:${cat.color}"></span>${isSub?'↳ ':''}${escapeHtml(cat.name)} ${expandBtn}${delBtn}</button>`; 
@@ -604,14 +619,26 @@
     getTopLevelCategories().forEach(top => { 
       const children = getChildren(top.id);
       html += renderCatChip(top, false, children.length > 0); 
-      if (!state.collapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true); }); }
+      // NOUVEAU: Utilisation de la mémoire locale pour l'affichage
+      if (!localCollapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true); }); }
     });
     const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join('');
     html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie principale</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`;
     el.innerHTML = html;
     
     el.querySelectorAll('.chip[data-filter]').forEach(btn => { btn.addEventListener('click', (e) => { if(e.target.closest('[data-delcat]') || e.target.closest('[data-togglecat]')) return; activeCategoryFilter = btn.dataset.filter; render(); }); });
-    el.querySelectorAll('[data-togglecat]').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.togglecat; if(state.collapsedCats.includes(id)) { state.collapsedCats = state.collapsedCats.filter(c => c !== id); } else { state.collapsedCats.push(id); } saveState(); render(); }); });
+    el.querySelectorAll('[data-togglecat]').forEach(btn => { 
+      btn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        const id = btn.dataset.togglecat; 
+        if(localCollapsedCats.includes(id)) { 
+          localCollapsedCats = localCollapsedCats.filter(c => c !== id); 
+        } else { 
+          localCollapsedCats.push(id); 
+        } 
+        render(); // NOUVEAU: On ne sauvegarde plus sur Firebase, c'est purement visuel
+      }); 
+    });
     el.querySelectorAll('[data-delcat]').forEach(btn => { 
       btn.addEventListener('click', (e) => { 
         e.stopPropagation(); const id = btn.dataset.delcat; const cat = state.categories.find(c => c.id === id); if(!cat) return; 
