@@ -1,7 +1,7 @@
 {
-  "name": "Ma liste de vêtements Partagée",
-  "short_name": "Wishlist",
-  "description": "Créez, partagez et gérez vos listes de vêtements en temps réel avec vos proches.",
+  "name": "Wish",
+  "short_name": "Wish",
+  "description": "Créez, partagez et gérez vos wishlist en temps réel avec vos proches.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
