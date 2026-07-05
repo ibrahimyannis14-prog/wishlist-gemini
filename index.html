@@ -2,8 +2,24 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Ma liste de vêtements Partagée</title>
+
+<!-- PWA: manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5B4FE9">
+<meta name="background-color" content="#FFFFFF">
+<meta name="description" content="Créez et partagez vos listes de vêtements en temps réel.">
+
+<!-- PWA: iOS support -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Wishlist">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -252,7 +268,8 @@
     <div class="auth-bar" id="authBar"></div>
 
     <button class="btn btn-primary" style="width:100%; margin-bottom:10px; flex:none;" onclick="window.openNewListModal()">+ Nouvelle Liste</button>
-    <button class="btn btn-ghost" style="width:100%; margin-bottom:20px; flex:none; border: 1px dashed var(--muted-2);" onclick="window.openJoinListModal()">🤝 Rejoindre une liste</button>
+    <button class="btn btn-ghost" style="width:100%; margin-bottom:10px; flex:none; border: 1px dashed var(--muted-2);" onclick="window.openJoinListModal()">🤝 Rejoindre une liste</button>
+    <button id="installAppBtn" class="btn btn-ghost" style="width:100%; margin-bottom:20px; flex:none; display:none; align-items:center; justify-content:center; gap:8px; border-color:var(--accent); color:var(--accent);" onclick="window.installApp()">📲 Installer l'application</button>
 
     <div class="sidebar-nav">
       <div class="sidebar-item active" id="nav-dashboard" onclick="window.showDashboard()">
@@ -1210,6 +1227,44 @@
   const initialUrlParams = new URLSearchParams(window.location.search);
   const initialListId = initialUrlParams.get('liste');
   if (initialListId) { window.showList(initialListId); } else { window.showDashboard(); }
+</script>
+
+<script>
+  // --- PWA : enregistrement du Service Worker ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        console.log('Service Worker enregistré avec succès :', reg.scope);
+      }).catch((err) => {
+        console.warn('Échec de l\'enregistrement du Service Worker :', err);
+      });
+    });
+  }
+
+  // --- PWA : gestion du prompt d'installation (Android / Desktop Chrome) ---
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn) installBtn.style.display = 'flex';
+  });
+
+  window.installApp = async function() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted' && window.showToast) window.showToast('Application installée ✅');
+    deferredInstallPrompt = null;
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn) installBtn.style.display = 'none';
+  };
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn) installBtn.style.display = 'none';
+  });
 </script>
 </body>
 </html>
