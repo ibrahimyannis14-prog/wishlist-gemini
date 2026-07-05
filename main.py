@@ -29,32 +29,34 @@ def guess_shop_from_url(url_string: str) -> str:
 
 
 def parse_price_string(price_str: str):
+    """Convertit '1.299,00 €' ou '1,299.00' ou '49,90' en float, ou None."""
     if not price_str:
         return None
-    # Garde uniquement chiffres, points, virgules
-    cleaned = re.sub(r'[^\d.,]', '', price_str)
+    cleaned = re.sub(r'[^\d.,]', '', str(price_str))
     if not cleaned:
         return None
-    # Cas "1.299,00" (format FR) -> "1299.00"
     if ',' in cleaned and '.' in cleaned:
         if cleaned.rfind(',') > cleaned.rfind('.'):
             cleaned = cleaned.replace('.', '').replace(',', '.')
         else:
             cleaned = cleaned.replace(',', '')
     elif ',' in cleaned:
-        # "49,90" -> décimale ; "1,299" -> millier (rare sans point)
         if len(cleaned.split(',')[-1]) == 2:
             cleaned = cleaned.replace(',', '.')
         else:
             cleaned = cleaned.replace(',', '')
     try:
-        return float(cleaned)
+        value = float(cleaned)
+        # Filtre les valeurs absurdes (souvent une erreur d'extraction : SKU, année, etc.)
+        if 0 < value < 100000:
+            return value
+        return None
     except ValueError:
         return None
 
 
 def extract_jsonld_product(response):
-    """Cherche un bloc JSON-LD schema.org/Product, souvent la source la plus fiable."""
+    """Cherche un bloc JSON-LD schema.org/Product — source la plus fiable quand elle existe."""
     scripts = response.css('script[type="application/ld+json"]::text').getall()
     for raw in scripts:
         try:
@@ -62,7 +64,6 @@ def extract_jsonld_product(response):
         except Exception:
             continue
         candidates = data if isinstance(data, list) else [data]
-        # Gère aussi le cas @graph
         flat = []
         for c in candidates:
             if isinstance(c, dict) and "@graph" in c:
@@ -84,10 +85,11 @@ def extract_jsonld_product(response):
                     image = image[0] if image else None
                 if isinstance(image, dict):
                     image = image.get("url")
+                price_raw = offers.get("price") or offers.get("lowPrice")
                 return {
                     "title": item.get("name"),
                     "image": image,
-                    "price": parse_price_string(str(offers.get("price"))) if offers.get("price") else None,
+                    "price": parse_price_string(price_raw) if price_raw else None,
                     "availability": offers.get("availability", ""),
                 }
     return None
@@ -97,13 +99,56 @@ def extract_price_from_meta(response):
     for selector in [
         'meta[property="product:price:amount"]::attr(content)',
         'meta[property="og:price:amount"]::attr(content)',
+        'meta[itemprop="price"]::attr(content)',
+        'meta[name="twitter:data1"]::attr(content)',
         '[itemprop="price"]::attr(content)',
         '[itemprop="price"]::text',
-        'meta[name="twitter:data1"]::attr(content)',
     ]:
         price_str = response.css(selector).get()
-        if price_str:
-            price = parse_price_string(price_str)
+        price = parse_price_string(price_str)
+        if price is not None:
+            return price
+    return None
+
+
+# Classes/attributs à exclure car ils indiquent presque toujours un ANCIEN prix barré
+EXCLUDE_PRICE_HINTS = ['old', 'strike', 'before', 'was', 'compare', 'crossed', 'original', 'barre', 'raye']
+
+# Sélecteurs CSS génériques utilisés par la grande majorité des boutiques en ligne
+PRICE_CSS_CANDIDATES = [
+    '[data-price]::attr(data-price)',
+    '[data-product-price]::attr(data-product-price)',
+    '.product-price::text',
+    '.current-price::text',
+    '.price-current::text',
+    '.sale-price::text',
+    '.price__current::text',
+    '.price-sales::text',
+    '.a-price .a-offscreen::text',   # Amazon
+    '[class*="ProductPrice"]::text',
+    '[class*="price"]::text',
+    'span:contains("€")::text',
+]
+
+
+def extract_price_from_dom(response):
+    """Dernier recours : parcourt les sélecteurs CSS de prix communs, en excluant les prix barrés."""
+    for selector in PRICE_CSS_CANDIDATES:
+        try:
+            elements = response.css(selector)
+        except Exception:
+            continue
+        for el in elements:
+            # Vérifie que l'élément (ou un parent proche) n'a pas une classe d'"ancien prix"
+            class_attr = ""
+            try:
+                class_attr = (el.attrib.get('class', '') or '').lower()
+            except Exception:
+                pass
+            if any(hint in class_attr for hint in EXCLUDE_PRICE_HINTS):
+                continue
+            text = el.get() if hasattr(el, 'get') else str(el)
+            price = parse_price_string(text)
             if price is not None:
                 return price
     return None
@@ -126,11 +171,19 @@ def extract_data(response, url: str):
     if not image:
         image = response.css('link[rel="image_src"]::attr(href)').get()
     if image:
-        image = urljoin(url, image.strip())  # résout les URLs relatives / protocol-relative
+        image = urljoin(url, image.strip())
 
+    # --- Cascade de stratégies pour le prix, du plus fiable au moins fiable ---
     price = jsonld.get("price")
+    confidence = "high" if price is not None else None
+
     if price is None:
         price = extract_price_from_meta(response)
+        confidence = "high" if price is not None else None
+
+    if price is None:
+        price = extract_price_from_dom(response)
+        confidence = "low" if price is not None else None
 
     availability_raw = (jsonld.get("availability") or "").lower()
     availability = "outofstock" if "outofstock" in availability_raw else (
@@ -145,11 +198,12 @@ def extract_data(response, url: str):
         "shop": shop,
         "image": image,
         "price": price,
+        "price_confidence": confidence,  # "high" | "low" | None
         "availability": availability,
     }
 
 
-def has_enough_data(data: dict) -> bool:
+def is_complete(data: dict) -> bool:
     return bool(data.get("price")) and bool(data.get("image"))
 
 
@@ -160,22 +214,23 @@ def scrape_url(url: str = Query(..., description="Lien de l'article à scrapper"
 
     print(f"[SCRAPE] Demande reçue pour : {url}")
 
-    # 1er essai : fetch HTTP simple (rapide)
+    data = {"title": "", "shop": guess_shop_from_url(url), "image": None, "price": None,
+            "price_confidence": None, "availability": "Inconnue"}
+
+    # 1er essai : requête HTTP simple (rapide, marche pour le HTML statique)
     try:
         response = Fetcher().get(url, timeout=15)
         data = extract_data(response, url)
     except Exception as e:
         print(f"[SCRAPE] Échec fetch simple : {e}")
-        data = {"title": "", "shop": guess_shop_from_url(url), "image": None, "price": None, "availability": "Inconnue"}
 
-    # 2e essai si données incomplètes : fetch avec navigateur headless (JS + anti-bot)
-    if not has_enough_data(data):
+    # 2e essai si prix ou image manquants : navigateur headless (JS rendu + anti-bot)
+    if not is_complete(data):
         try:
             print("[SCRAPE] Données incomplètes, tentative avec StealthyFetcher...")
-            response = StealthyFetcher().get(url, timeout=25)
+            response = StealthyFetcher().get(url, timeout=30, network_idle=True)
             data2 = extract_data(response, url)
-            # fusionne : on garde ce qu'on avait déjà si le 2e essai ne trouve rien de mieux
-            for key in ["title", "shop", "image", "price"]:
+            for key in ["title", "shop", "image", "price", "price_confidence"]:
                 if not data.get(key) and data2.get(key):
                     data[key] = data2[key]
             if data.get("availability") == "Inconnue" and data2.get("availability") != "Inconnue":
