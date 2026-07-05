@@ -24,7 +24,6 @@
   a{color:inherit;} button{font-family:inherit;cursor:pointer;} input,select{font-family:inherit;}
   .page{max-width:1180px;margin:0 auto;padding:44px 24px 100px; position: relative;}
   
-  /* --- AUTH & MODAL STYLES --- */
   .auth-bar { position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px; z-index: 10; }
   .auth-user { font-size: 13px; font-weight: 600; color: var(--muted); }
   .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(20,22,31,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
@@ -33,7 +32,7 @@
   .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; color: var(--muted); cursor: pointer; transition: color 0.2s;}
   .modal-close:hover { color: var(--ink); }
   .visitor-banner { background: var(--info-soft); color: var(--info); padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); margin-bottom: 24px; display: none; border: 1px solid rgba(47, 128, 237, 0.2);}
-  /* -------------------------- */
+  .collab-banner { background: var(--ok-soft); color: #0B7A5A; padding: 12px 20px; text-align: center; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); margin-bottom: 24px; display: none; border: 1px solid var(--ok);}
 
   .hero{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap; padding-bottom:36px; border-bottom:1px solid var(--line); margin-bottom:40px; margin-top: 20px;}
   .hero-eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:10px;}
@@ -44,13 +43,11 @@
   .stat-value{font-family:var(--font-display); font-size:22px; font-weight:700; display:block;}
   .stat-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em;}
   
-  /* --- STYLES DES BOUTONS DE PARTAGE --- */
   .share-badge { background: var(--accent-soft); color: var(--accent-ink); padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--accent); cursor: pointer; transition: background 0.2s;}
   .share-badge:hover { background: var(--accent); color: white; }
   
   .invite-badge { background: var(--ok-soft); color: #0B7A5A; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ok); cursor: pointer; transition: background 0.2s;}
   .invite-badge:hover { background: var(--ok); color: white; }
-  /* ------------------------------------- */
 
   .section-head{display:flex; align-items:center; gap:12px; margin:52px 0 20px;}
   .section-head .num{font-family:var(--font-mono); background:var(--ink); color:#fff; font-size:11px; padding:3px 8px; border-radius:20px; flex:none;}
@@ -242,22 +239,24 @@
   <div id="visitorBanner" class="visitor-banner">
     👀 Mode Lecture Seule : Vous regardez la liste de quelqu'un d'autre.
   </div>
+  
+  <div id="collabBanner" class="collab-banner">
+    🤝 Mode Collaboratif : Vous pouvez ajouter des vêtements à cette liste.
+  </div>
 
   <div class="hero">
     <div>
       <span class="hero-eyebrow">Wishlist Partagée</span>
       <h1 class="hero-title">Ma liste de<br>vêtements</h1>
       <div class="io-actions">
-        <!-- Bouton de Partage Classique -->
         <button class="share-badge" id="shareBtn" onclick="partagerListe()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           Partager cette liste
         </button>
         
-        <!-- NOUVEAU : Bouton d'invitation à collaborer (caché par défaut) -->
         <button class="invite-badge" id="inviteBtn" onclick="inviterAmi()" style="display:none;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-          Inviter un ami à collaborer
+          Inviter un collaborateur
         </button>
       </div>
     </div>
@@ -271,7 +270,7 @@
   <!-- SECTION AJOUT PROTEGÉE -->
   <div id="ownerAddSection" style="display:none;">
     <div class="section-head collapsible-head" onclick="window.togglePanel('addArticlePanel', 'addArticleIcon')">
-      <span class="num">01</span>
+      <span class="num owner-num">01</span>
       <h2>Ajouter un article</h2>
       <svg id="addArticleIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       <div class="line"></div>
@@ -321,7 +320,7 @@
   </div>
 
   <div class="section-head collapsible-head" onclick="window.togglePanel('filtersPanel', 'filtersIcon')">
-    <span class="num owner-num">02</span>
+    <span class="num owner-num-mid">02</span>
     <h2>Catégories & Filtres</h2>
     <svg id="filtersIcon" class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
     <div class="line"></div>
@@ -360,7 +359,7 @@
 <script>
   function partagerListe() {
     const url = new URL(window.location.href);
-    url.searchParams.delete('invite'); // On s'assure de ne pas donner le lien d'invitation par erreur ici
+    url.searchParams.delete('invite'); 
     const cleanUrl = url.toString();
     
     if (navigator.share) {
@@ -376,10 +375,9 @@
     }
   }
 
-  // --- NOUVEAU : Fonction pour inviter un collaborateur ---
   function inviterAmi() {
     const url = new URL(window.location.href);
-    url.searchParams.set('invite', 'true'); // On ajoute le paramètre secret
+    url.searchParams.set('invite', 'true'); 
     const inviteUrl = url.toString();
     
     if (navigator.share) {
@@ -554,17 +552,15 @@
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
   function iconHanger(color){ return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6"><circle cx="12" cy="4" r="1.6"/><path d="M12 6v2"/><path d="M2 20l8.5-6a2 2 0 012.9 0L22 20"/><path d="M2 20h20"/></svg>`; }
 
-  // --- LOGIQUE DE PROPRIÉTAIRE ---
-  function isOwner() {
-    if (state.ownerId) {
-      return currentUser !== null && currentUser.uid === state.ownerId;
-    }
-    return true; 
-  }
+  // --- NOUVELLE LOGIQUE DE DROITS ---
+  function isOwner() { return state.ownerId && currentUser && currentUser.uid === state.ownerId; }
+  function isCollaborator() { return currentUser && state.collaborators && state.collaborators.includes(currentUser.uid); }
+  function canEdit() { return (!state.ownerId) || isOwner() || isCollaborator(); }
 
   function checkOwnershipAndRender() {
     if (!isStateLoaded) return; 
     
+    // 1. Initialisation d'une nouvelle liste
     if (!state.ownerId && state.items.length === 0) {
       if (currentUser) {
         state.ownerId = currentUser.uid;
@@ -573,24 +569,43 @@
         document.getElementById('racks').innerHTML = `<div class="global-empty"><strong>Création de liste</strong><p style="margin-bottom:16px;">Veuillez vous connecter ou créer un compte gratuit pour créer et conserver cette liste.</p><button class="btn btn-primary" onclick="window.openAuthModal('signup')">Créer mon compte</button></div>`;
         document.getElementById('ownerAddSection').style.display = 'none';
         document.getElementById('visitorBanner').style.display = 'none';
+        document.getElementById('collabBanner').style.display = 'none';
         document.getElementById('inviteBtn').style.display = 'none';
-        document.querySelector('.owner-num').textContent = "01";
-        document.querySelector('.owner-num-last').textContent = "02";
         
         window.openAuthModal('signup');
         return; 
       }
     }
 
+    // 2. Traitement du lien d'invitation
+    const urlParams = new URLSearchParams(window.location.search);
+    if (currentUser && urlParams.get('invite') === 'true') {
+      if (state.ownerId && state.ownerId !== currentUser.uid) {
+        if (!state.collaborators.includes(currentUser.uid)) {
+          state.collaborators.push(currentUser.uid);
+          saveState(); // C'est ici que les nouvelles règles Firestore entrent en jeu
+        }
+      }
+      // On nettoie l'URL pour faire disparaître le "?invite=true"
+      const url = new URL(window.location.href);
+      url.searchParams.delete('invite');
+      window.history.replaceState(null, '', url.toString());
+    }
+
+    const editMode = canEdit();
     const ownerMode = isOwner();
-    document.getElementById('ownerAddSection').style.display = ownerMode ? 'block' : 'none';
-    document.getElementById('visitorBanner').style.display = (!ownerMode && state.ownerId) ? 'block' : 'none';
+    const collabMode = isCollaborator();
+
+    document.getElementById('ownerAddSection').style.display = editMode ? 'block' : 'none';
+    document.getElementById('visitorBanner').style.display = (!editMode && state.ownerId) ? 'block' : 'none';
+    document.getElementById('collabBanner').style.display = collabMode ? 'block' : 'none';
     
-    // NOUVEAU : Affichage du bouton inviter seulement si on est le propriétaire
+    // Seul le propriétaire peut inviter d'autres personnes
     document.getElementById('inviteBtn').style.display = ownerMode ? 'inline-flex' : 'none';
     
-    document.querySelector('.owner-num').textContent = ownerMode ? "02" : "01";
-    document.querySelector('.owner-num-last').textContent = ownerMode ? "03" : "02";
+    document.querySelector('.owner-num').textContent = editMode ? "01" : "";
+    document.querySelector('.owner-num-mid').textContent = editMode ? "02" : "01";
+    document.querySelector('.owner-num-last').textContent = editMode ? "03" : "02";
 
     render();
   }
@@ -603,7 +618,7 @@
       else { state = { ownerId: null, collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} }; }
       
       if(!state.tagColors) state.tagColors = {};
-      if(!state.collaborators) state.collaborators = []; // On s'assure que le tableau existe
+      if(!state.collaborators) state.collaborators = []; // Sécurité
       
       ensureDefaultCategories(); 
       
@@ -616,7 +631,7 @@
   }
 
   function saveState(){ 
-    if (!isOwner()) return; 
+    if (!canEdit()) return; 
     setDoc(doc(db, "wishlists", listId), state).catch(e => console.error("Erreur Firebase:", e)); 
   }
   
@@ -754,7 +769,7 @@
   document.getElementById('cancelEdit').addEventListener('click', resetForm);
 
   document.getElementById('submitBtn').addEventListener('click', () => {
-    if(!isOwner()) return; 
+    if(!canEdit()) return; 
     const url = document.getElementById('f-url').value.trim(), shop = document.getElementById('f-shop').value.trim(), price = parseFloat(document.getElementById('f-price').value);
     const size = document.getElementById('f-size').value.trim(); const avail = document.getElementById('f-avail-rupture').checked ? 'Rupture' : 'En stock';
     let cat = document.getElementById('f-cat').value; if (!cat && state.categories.length > 0) cat = state.categories[0].id;
@@ -770,7 +785,7 @@
   });
 
   window.startEdit = function(id){
-    if(!isOwner()) return;
+    if(!canEdit()) return;
     const item = state.items.find(i => i.id === id); if(!item) return; editingId = id;
     const panel = document.getElementById('addArticlePanel'); const icon = document.getElementById('addArticleIcon');
     panel.classList.remove('collapsed'); icon.classList.remove('rotated');
@@ -785,7 +800,7 @@
   }
   
   window.deleteItem = function(id){ 
-    if(!isOwner()) return;
+    if(!canEdit()) return;
     state.items = state.items.filter(i => i.id !== id); saveState(); render();
   }
   
@@ -794,6 +809,7 @@
   function renderCatChip(cat, isSub, hasChildren = false, ownerMode = false){ 
     const active = activeCategoryFilter === cat.id; const isCollapsed = localCollapsedCats.includes(cat.id);
     const expandBtn = hasChildren ? `<span class="cat-expand ${isCollapsed?'collapsed':''}" data-togglecat="${cat.id}">▼</span>` : '';
+    // L'édition des catégories reste exclusive au propriétaire
     const delBtn = ownerMode ? `<span class="chip-del" data-delcat="${cat.id}">✕</span>` : '';
     return `<button class="chip ${active?'active':''} ${isSub?'chip-sub':''}" data-filter="${cat.id}"><span class="dot" style="background:${cat.color}"></span>${isSub?'↳ ':''}${escapeHtml(cat.name)} ${expandBtn}${delBtn}</button>`; 
   }
@@ -808,6 +824,7 @@
       if (!localCollapsedCats.includes(top.id)) { children.forEach(child => { html += renderCatChip(child, true, false, ownerMode); }); }
     });
     
+    // N'afficher la création de catégorie que si on est propriétaire absolu
     if (ownerMode) {
       const parentOptions = getTopLevelCategories().map(c => `<option value="${c.id}">Sous-catégorie de ${escapeHtml(c.name)}</option>`).join('');
       html += `<div class="new-cat"><select id="newCatParent"><option value="">Nouvelle catégorie principale</option>${parentOptions}</select><input type="text" id="newCatInput" placeholder="Nom"><button id="addCatBtn">+</button></div>`;
@@ -868,7 +885,7 @@
     const cat = findCategory(item.categoryId), style = AVAIL_STYLE[item.availability] || AVAIL_STYLE['Inconnue'];
     const photoHtml = `<div class="ph-placeholder" style="background:${cat.color}18">${iconHanger(cat.color)}</div>${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.shop)}" loading="lazy" onerror="this.style.display='none'">` : ''}`;
     
-    const editBtns = isOwner() ? `<div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="if(confirm('Supprimer ?')) window.deleteItem('${item.id}')">${iconTrash()}</button></div>` : '';
+    const editBtns = canEdit() ? `<div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="if(confirm('Supprimer ?')) window.deleteItem('${item.id}')">${iconTrash()}</button></div>` : '';
 
     return `<div class="item-card"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(item.availability)}</span>${editBtns}</div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div><a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
   }
@@ -878,7 +895,7 @@
 
   function renderRacks(){
     const el = document.getElementById('racks'), query = document.getElementById('searchInput').value;
-    if(state.items.length === 0){ el.innerHTML = `<div class="global-empty"><strong>La liste est vide</strong>${isOwner() ? 'Ajoutez votre premier lien ci-dessus pour commencer.' : 'Le propriétaire n\'a pas encore ajouté de vêtements.'}</div>`; return; }
+    if(state.items.length === 0){ el.innerHTML = `<div class="global-empty"><strong>La liste est vide</strong>${canEdit() ? 'Ajoutez votre premier lien ci-dessus pour commencer.' : 'Le propriétaire n\'a pas encore ajouté de vêtements.'}</div>`; return; }
     let html = '', anyVisible = false; const filterCat = activeCategoryFilter === 'all' ? null : state.categories.find(c => c.id === activeCategoryFilter);
     if(filterCat && filterCat.parentId){ const items = itemsForCategoryId(filterCat.id, query); anyVisible = items.length > 0; html += renderLeafSection(filterCat, items);
     } else {
@@ -918,7 +935,7 @@
   }
 
   document.querySelectorAll('.toggle-btn').forEach(btn => { btn.addEventListener('click', () => { chartMode = btn.dataset.chartmode; chartExcluded.clear(); document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn)); renderSummary(); }); });
-  function render(){ if(isOwner()) renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
+  function render(){ if(canEdit()) renderCategorySelect(); renderCategoryToolbar(); renderTagToolbar(); renderRacks(); renderSummary(); }
   
   loadState();
 </script>
