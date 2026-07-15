@@ -61,6 +61,16 @@
   /* --- BOUTON TOGGLE MENU --- */
   .sidebar-toggle-btn { position:fixed; top:16px; left:16px; z-index:100; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 12px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-sm); font-size:13px; color:var(--ink); transition:background 0.2s; }
   .sidebar-toggle-btn:hover { background:var(--bg-alt); }
+
+  /* --- WIDGET COMPTE (discret, indépendant du menu) --- */
+  .account-widget { position:fixed; top:16px; right:16px; z-index:100; }
+  .account-btn { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:8px 14px; font-size:12.5px; font-weight:600; color:var(--muted); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:6px; max-width:180px; transition:background 0.2s, color 0.2s, border-color 0.2s; }
+  .account-btn:hover { background:var(--bg-alt); color:var(--ink); }
+  .account-btn.logged-in { color:var(--ink); border-color:var(--accent-soft); }
+  .account-btn span#accountBtnLabel{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .account-dropdown { display:none; position:absolute; top:calc(100% + 8px); right:0; background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); box-shadow:var(--shadow-md); padding:12px; min-width:210px; flex-direction:column; gap:8px; }
+  .account-dropdown.open { display:flex; }
+  .account-dropdown-email { font-size:11.5px; color:var(--muted); padding:2px 4px 8px; border-bottom:1px solid var(--line); word-break:break-all; }
   
   /* --- CONTENU CENTRAL --- */
   .main-content { flex:1; overflow-y:auto; position:relative; display:flex; flex-direction:column; align-items:center; padding-top:60px;}
@@ -109,7 +119,7 @@
   .preview-box img{width:100%;height:100%;object-fit:cover;display:block;}
   .preview-placeholder{color:var(--muted-2);font-size:11px;text-align:center;padding:10px;line-height:1.5;}
   .preview-status{position:absolute;bottom:0;left:0;right:0; background:rgba(20,22,31,0.75); color:#fff; font-size:10.5px; text-align:center; padding:4px; font-family:var(--font-mono);}
-  .field-grid{display:grid; grid-template-columns:1.4fr 1fr 0.8fr 0.8fr 1fr; gap:14px;}
+  .field-grid{display:grid; grid-template-columns:1.2fr 0.8fr 0.6fr 0.7fr 0.9fr 1fr; gap:14px;}
   .field label.field-title{display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin-bottom:6px;}
   .field input:not([type="checkbox"]):not([type="color"]), .field select{width:100%; background:var(--bg-alt); border:1px solid var(--line); color:var(--ink); padding:10px 12px; border-radius:var(--radius-sm); font-size:14px; outline:none;}
   .field input:not([type="checkbox"]):not([type="color"]):focus, .field select:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); background:#fff;}
@@ -151,12 +161,16 @@
   .sub-dot{width:7px;height:7px;border-radius:50%;flex:none;}
   .sub-section-head h4{font-family:var(--font-display);font-weight:600;font-size:14px;margin:0;color:var(--muted);}
   .card-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:18px;}
-  .item-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-sm); transition:transform .15s; display:flex; flex-direction:column;}
+  .item-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-sm); transition:transform .15s, opacity .2s; display:flex; flex-direction:column;}
   .item-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+  .item-card.purchased{opacity:0.55;}
+  .item-card.purchased:hover{opacity:0.85;}
+  .item-card.purchased .ic-price{text-decoration:line-through; color:var(--muted);}
   .ic-photo{width:100%; aspect-ratio:4/5; background:var(--bg-alt); position:relative; overflow:hidden;}
   .ic-photo img{width:100%;height:100%;object-fit:cover;display:block; position:relative; z-index:1;}
   .ic-photo .ph-placeholder{width:100%;height:100%; display:flex;align-items:center;justify-content:center; position:absolute; top:0; left:0; z-index:0;}
   .ic-avail{position:absolute;top:10px;left:10px; font-size:10.5px;font-weight:700; padding:4px 9px; border-radius:999px; z-index:2;}
+  .ic-qty-badge{position:absolute;bottom:8px;left:8px; font-size:10.5px;font-weight:700; padding:3px 8px; border-radius:999px; z-index:2; background:rgba(20,22,31,0.75); color:#fff; font-family:var(--font-mono);}
   .ic-icons{position:absolute;top:8px;right:8px; display:flex;gap:5px; opacity:0; transition:opacity .15s; z-index:2;}
   .item-card:hover .ic-icons{opacity:1;}
   @media (hover: none) { .ic-icons { opacity: 1 !important; } }
@@ -169,7 +183,12 @@
   .ic-note{font-size:12px;color:var(--muted);margin:0 0 8px;}
   .ic-row{display:flex;align-items:center;justify-content:space-between;}
   .ic-price{font-family:var(--font-mono);font-weight:700;font-size:16px;}
+  .ic-price-qty{font-size:11px;color:var(--muted);font-weight:600;margin-left:4px;}
   .ic-size{font-size:11.5px;color:var(--muted);background:var(--bg-alt);padding:3px 8px;border-radius:6px;}
+  .ic-line-total{font-size:11px;color:var(--muted);text-align:right;margin-top:4px;}
+  .purchase-row{display:flex;align-items:center;gap:7px;margin:2px 0 10px; padding-top:8px; border-top:1px dashed var(--line);}
+  .purchase-row label{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;}
+  .purchase-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--ok);cursor:pointer;}
   .ic-link{display:block;margin-top:10px; text-align:center; font-size:12px;font-weight:600; color:var(--accent); text-decoration:none; padding-top:9px; border-top:1px solid var(--line);}
   .section-empty, .global-empty{text-align:center; padding:44px 20px; color:var(--muted); font-size:13.5px; border:1px dashed var(--line); border-radius:var(--radius-lg); background:var(--bg-alt);}
   .global-empty strong{display:block;font-family:var(--font-display);font-size:18px; margin-bottom:6px;color:var(--ink);font-weight:600;}
@@ -245,6 +264,7 @@
     .new-cat { flex-direction: column; align-items: stretch; width: 100%; }
     .new-cat select, .new-cat input { max-width: 100%; width: 100%; margin-bottom: 5px; }
     .new-cat button { align-self: flex-end; }
+    .account-btn { max-width: 120px; padding: 7px 10px; }
   }
   @media (max-width: 480px) {
     .chart-card-head { flex-direction: column; align-items: center; }
@@ -260,12 +280,17 @@
   Menu
 </button>
 
+<div class="account-widget" id="accountWidget">
+  <button class="account-btn" id="accountBtn" onclick="window.toggleAccountMenu(event)">
+    <span id="accountBtnLabel">Connexion</span>
+  </button>
+  <div class="account-dropdown" id="accountDropdown"></div>
+</div>
+
 <div class="app-container">
   
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">Mes Wishlists</div>
-    
-    <div class="auth-bar" id="authBar"></div>
 
     <button class="btn btn-primary" style="width:100%; margin-bottom:10px; flex:none;" onclick="window.openNewListModal()">+ Nouvelle Liste</button>
     <button class="btn btn-ghost" style="width:100%; margin-bottom:10px; flex:none; border: 1px dashed var(--muted-2);" onclick="window.openJoinListModal()">🤝 Rejoindre une liste</button>
@@ -352,6 +377,7 @@
               <div class="field-grid">
                 <div class="field"><label class="field-title" for="f-shop">Boutique</label><input id="f-shop" type="text" placeholder="Détectée depuis le lien"></div>
                 <div class="field"><label class="field-title" for="f-price">Prix</label><input id="f-price" type="number" min="0" step="0.01" placeholder="49.90"><span id="priceHint" style="display:none;font-size:11px;color:var(--warn);margin-top:4px;">⚠️ Prix estimé, vérifiez-le</span></div>
+                <div class="field"><label class="field-title" for="f-qty">Quantité</label><input id="f-qty" type="number" min="1" step="1" value="1"></div>
                 <div class="field"><label class="field-title" for="f-size">Taille</label><input id="f-size" type="text" placeholder="M / 38"></div>
                 <div class="field">
                   <label class="field-title">Disponibilité</label>
@@ -563,6 +589,17 @@
     document.getElementById('confirmModal').classList.remove('open');
     confirmAction = null;
   }
+
+  // --- WIDGET COMPTE : ouverture/fermeture, indépendant du menu latéral ---
+  window.toggleAccountMenu = function(e) {
+    if (e) e.stopPropagation();
+    document.getElementById('accountDropdown').classList.toggle('open');
+  }
+  document.addEventListener('click', (e) => {
+    const widget = document.getElementById('accountWidget');
+    const dropdown = document.getElementById('accountDropdown');
+    if (widget && dropdown && !widget.contains(e.target)) dropdown.classList.remove('open');
+  });
 </script>
 
 <script type="module">
@@ -617,6 +654,7 @@
   let currentUser = null; let authMode = 'login'; 
 
   window.openAuthModal = function(mode = 'login') {
+    const dropdown = document.getElementById('accountDropdown'); if(dropdown) dropdown.classList.remove('open');
     authMode = mode; document.getElementById('authModal').classList.add('open'); document.getElementById('authError').style.display = 'none';
     document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
     if(mode === 'login') { document.getElementById('authTitle').innerText = 'Connexion'; document.getElementById('authSubmitBtn').innerText = 'Se connecter'; document.getElementById('authToggleText').innerText = 'Pas de compte ?'; document.getElementById('authToggleLink').innerText = "S'inscrire"; } 
@@ -648,12 +686,20 @@
   }
 
   onAuthStateChanged(auth, async (user) => {
-    currentUser = user; const authBar = document.getElementById('authBar');
+    currentUser = user;
+    const accountBtn = document.getElementById('accountBtn');
+    const accountBtnLabel = document.getElementById('accountBtnLabel');
+    const accountDropdown = document.getElementById('accountDropdown');
     if(user) {
-      authBar.innerHTML = `<span class="auth-user" title="${user.email}">${user.email || 'Utilisateur'}</span><div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button></div>`;
+      accountBtn.classList.add('logged-in');
+      accountBtnLabel.innerHTML = `👤 ${escapeHtml((user.email || 'Compte').split('@')[0])}`;
+      accountDropdown.innerHTML = `<div class="account-dropdown-email">${escapeHtml(user.email || '')}</div><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button>`;
     } else {
-      authBar.innerHTML = `<button class="btn btn-primary" onclick="window.openAuthModal('login')">Se connecter</button>`;
+      accountBtn.classList.remove('logged-in');
+      accountBtnLabel.innerHTML = 'Connexion';
+      accountDropdown.innerHTML = `<button class="btn btn-primary btn-small" onclick="window.openAuthModal('login')">Se connecter</button><button class="btn btn-ghost btn-small" onclick="window.openAuthModal('signup')">Créer un compte</button>`;
     }
+    accountDropdown.classList.remove('open');
     await updateSidebarLists(); checkOwnershipAndRender();
   });
 
@@ -790,6 +836,14 @@
     });
   }
 
+  window.togglePurchased = function(id){
+    if(!canEdit()) return;
+    const item = state.items.find(i => i.id === id); if(!item) return;
+    item.purchased = !item.purchased;
+    saveState(); render(); updateSidebarLists();
+    window.showToast(item.purchased ? "✅ Marqué comme acheté" : "Article remis dans la liste à acheter");
+  }
+
   async function fetchUserLists(uid) {
     const listsRef = collection(db, "wishlists"); const userLists = [];
     try {
@@ -849,6 +903,8 @@
   function tagColor(tag){ if(state.tagColors && state.tagColors[tag]) return state.tagColors[tag]; let hash = 0; for(let i=0; i<tag.length; i++){ hash = tag.charCodeAt(i) + ((hash<<5)-hash); } return CAT_PALETTE[Math.abs(hash) % CAT_PALETTE.length]; }
   function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str ?? ''; return d.innerHTML; }
   function formatPrice(n){ return (Number(n)||0).toLocaleString('fr-FR', {style:'currency', currency:'EUR'}); }
+  function itemQuantity(item){ return Math.max(1, parseInt(item.quantity) || 1); }
+  function itemLineTotal(item){ return (Number(item.price)||0) * itemQuantity(item); }
 
   function iconEdit(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`; }
   function iconTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z"/></svg>`; }
@@ -1025,7 +1081,7 @@
 
   function resetForm(){
     document.getElementById('f-url').value = ''; document.getElementById('f-shop').value = ''; document.getElementById('f-shop').dataset.touched = '';
-    document.getElementById('f-price').value = ''; document.getElementById('f-price').dataset.touched = ''; document.getElementById('f-size').value = ''; const priceHintReset = document.getElementById('priceHint'); if(priceHintReset) priceHintReset.style.display = 'none';
+    document.getElementById('f-price').value = ''; document.getElementById('f-price').dataset.touched = ''; document.getElementById('f-qty').value = '1'; document.getElementById('f-size').value = ''; const priceHintReset = document.getElementById('priceHint'); if(priceHintReset) priceHintReset.style.display = 'none';
     document.getElementById('f-avail-rupture').checked = false; document.getElementById('f-avail-rupture').dataset.touched = '';
     document.getElementById('f-cat').value = state.categories.length ? state.categories[0].id : ''; document.getElementById('f-note').value = ''; document.getElementById('f-image').value = '';
     document.getElementById('previewBox').innerHTML = `<span class="preview-placeholder">La photo apparaîtra ici</span>`;
@@ -1044,6 +1100,7 @@
   document.getElementById('submitBtn').addEventListener('click', async () => {
     if(!canEdit()) return; 
     const url = document.getElementById('f-url').value.trim(), shop = document.getElementById('f-shop').value.trim(), price = parseFloat(document.getElementById('f-price').value);
+    const quantity = Math.max(1, parseInt(document.getElementById('f-qty').value) || 1);
     const size = document.getElementById('f-size').value.trim(); const avail = document.getElementById('f-avail-rupture').checked ? 'Rupture' : 'En stock';
     let cat = document.getElementById('f-cat').value; if (!cat && state.categories.length > 0) cat = state.categories[0].id; const note = document.getElementById('f-note').value.trim();
     if(!url || !shop || isNaN(price)){ window.showToast('Veuillez renseigner le lien, la boutique et le prix.', true); return; }
@@ -1070,10 +1127,12 @@
         const tags = [...currentTags];
         
         if(editingId){ 
-            Object.assign(state.items.find(i => i.id === editingId), {url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: finalImage}); 
+            const existing = state.items.find(i => i.id === editingId);
+            const purchased = existing ? !!existing.purchased : false;
+            Object.assign(existing, {url, shop, price, quantity, size, availability: avail, categoryId: cat, note, tags, image: finalImage, purchased}); 
             window.showToast("Modifications enregistrées"); 
         } else { 
-            state.items.push({ id: uid(), url, shop, price, size, availability: avail, categoryId: cat, note, tags, image: finalImage, addedAt: Date.now() }); 
+            state.items.push({ id: uid(), url, shop, price, quantity, size, availability: avail, categoryId: cat, note, tags, image: finalImage, purchased: false, addedAt: Date.now() }); 
             window.showToast("Article ajouté"); 
         }
         
@@ -1096,7 +1155,7 @@
     const panel = document.getElementById('addArticlePanel'); const icon = document.getElementById('addArticleIcon');
     panel.classList.remove('collapsed'); icon.classList.remove('rotated');
     document.getElementById('f-url').value = item.url; document.getElementById('f-shop').value = item.shop; document.getElementById('f-shop').dataset.touched = '1';
-    document.getElementById('f-price').value = item.price; document.getElementById('f-price').dataset.touched = '1'; document.getElementById('f-size').value = item.size; 
+    document.getElementById('f-price').value = item.price; document.getElementById('f-price').dataset.touched = '1'; document.getElementById('f-qty').value = itemQuantity(item); document.getElementById('f-size').value = item.size; 
     document.getElementById('f-avail-rupture').checked = (item.availability === 'Rupture'); document.getElementById('f-avail-rupture').dataset.touched = '1';
     document.getElementById('f-cat').value = item.categoryId; document.getElementById('f-note').value = item.note || ''; currentTags = [...(item.tags || [])];
     renderTagInputChips(); 
@@ -1171,10 +1230,16 @@
   }
 
   function renderItemCard(item){
-    const cat = findCategory(item.categoryId), style = AVAIL_STYLE[item.availability] || AVAIL_STYLE['Inconnue'];
+    const cat = findCategory(item.categoryId); const purchased = !!item.purchased;
+    const style = purchased ? {bg:'var(--ok-soft)', fg:'#0B7A5A'} : (AVAIL_STYLE[item.availability] || AVAIL_STYLE['Inconnue']);
+    const badgeText = purchased ? '✓ Acheté' : item.availability;
+    const qty = itemQuantity(item);
     const photoHtml = `<div class="ph-placeholder" style="background:${cat.color}18">${iconHanger(cat.color)}</div>${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.shop)}" loading="lazy" onerror="this.style.display='none'">` : ''}`;
     const editBtns = canEdit() ? `<div class="ic-icons"><button title="Modifier" onclick="window.startEdit('${item.id}')">${iconEdit()}</button><button title="Supprimer" onclick="window.deleteItem('${item.id}')">${iconTrash()}</button></div>` : '';
-    return `<div class="item-card"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(item.availability)}</span>${editBtns}</div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div><a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
+    const qtyBadge = qty > 1 ? `<span class="ic-qty-badge">×${qty}</span>` : '';
+    const purchaseRow = canEdit() ? `<div class="purchase-row"><label><input type="checkbox" ${purchased?'checked':''} onchange="window.togglePurchased('${item.id}')"> Déjà acheté</label></div>` : '';
+    const lineTotalRow = qty > 1 ? `<div class="ic-line-total">Total : ${formatPrice(itemLineTotal(item))}</div>` : '';
+    return `<div class="item-card ${purchased?'purchased':''}"><div class="ic-photo">${photoHtml}<span class="ic-avail" style="background:${style.bg};color:${style.fg}">${escapeHtml(badgeText)}</span>${qtyBadge}${editBtns}</div><div class="ic-body"><div class="ic-cat" style="color:${cat.color}"><span class="dot" style="background:${cat.color}"></span>${escapeHtml(cat.name)}</div><p class="ic-shop">${escapeHtml(item.shop)}</p>${item.note ? `<p class="ic-note">${escapeHtml(item.note)}</p>` : ''}${(item.tags && item.tags.length) ? `<div class="ic-tags">${item.tags.map(t => `<span class="ic-tag" style="background:${tagColor(t)}">${escapeHtml(t)}</span>`).join('')}</div>` : ''}<div class="ic-row"><span class="ic-price">${formatPrice(item.price)}${qty>1?`<span class="ic-price-qty">×${qty}</span>`:''}</span><span class="ic-size">${escapeHtml(item.size || '—')}</span></div>${lineTotalRow}${purchaseRow}<a class="ic-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">Voir l'article ↗</a></div></div>`;
   }
   
   function itemsForCategoryId(catId, query){ return state.items.filter(i => i.categoryId === catId && itemMatchesSearch(i, query) && itemMatchesTags(i)); }
@@ -1204,13 +1269,22 @@
   }
 
   function renderSummary(){
-    const total = state.items.reduce((s,i) => s + (Number(i.price)||0), 0);
-    document.getElementById('statCount').textContent = state.items.length; document.getElementById('statShops').textContent = new Set(state.items.map(i => i.shop.toLowerCase())).size; document.getElementById('statTotal').textContent = formatPrice(total); document.getElementById('totalValue').textContent = formatPrice(total); document.getElementById('totalSub').textContent = `${state.items.length} article${state.items.length>1?'s':''} · ${document.getElementById('statShops').textContent} boutique${document.getElementById('statShops').textContent>1?'s':''}`;
+    const activeItems = state.items.filter(i => !i.purchased);
+    const purchasedItems = state.items.filter(i => i.purchased);
+    const total = activeItems.reduce((s,i) => s + itemLineTotal(i), 0);
+    document.getElementById('statCount').textContent = state.items.length;
+    document.getElementById('statShops').textContent = new Set(state.items.map(i => i.shop.toLowerCase())).size;
+    document.getElementById('statTotal').textContent = formatPrice(total);
+    document.getElementById('totalValue').textContent = formatPrice(total);
+    const shopsCount = document.getElementById('statShops').textContent;
+    let sub = `${activeItems.length} article${activeItems.length>1?'s':''} à acheter · ${shopsCount} boutique${shopsCount>1?'s':''}`;
+    if(purchasedItems.length > 0) sub += ` · ${purchasedItems.length} déjà acheté${purchasedItems.length>1?'s':''} (exclu${purchasedItems.length>1?'s':''} du total)`;
+    document.getElementById('totalSub').textContent = sub;
     let title = 'Prix par boutique'; if (chartMode === 'category') title = 'Prix par catégorie'; if (chartMode === 'tag') title = 'Prix par étiquette'; document.getElementById('chartTitle').textContent = title;
     let entries;
-    if(chartMode === 'category'){ const byCat = {}; state.items.forEach(i => { const cat = findCategory(i.categoryId); if(!byCat[cat.id]) byCat[cat.id] = { label: cat.name, color: cat.color, amount: 0 }; byCat[cat.id].amount += Number(i.price) || 0; }); entries = Object.values(byCat).sort((a,b) => b.amount - a.amount); } 
-    else if(chartMode === 'tag'){ const byTag = {}; state.items.forEach(i => { const t = (i.tags && i.tags.length > 0) ? i.tags[0] : 'Sans étiquette'; if(!byTag[t]) byTag[t] = { label: t, color: t === 'Sans étiquette' ? '#9CA0AC' : tagColor(t), amount: 0 }; byTag[t].amount += Number(i.price) || 0; }); entries = Object.values(byTag).sort((a,b) => b.amount - a.amount); } 
-    else { const byShop = {}; state.items.forEach(i => { byShop[i.shop] = (byShop[i.shop] || 0) + (Number(i.price)||0); }); entries = Object.entries(byShop).sort((a,b) => b[1]-a[1]).map(([shop, amount], idx) => ({ label: shop, amount, color: colorForIndex(idx) })); }
+    if(chartMode === 'category'){ const byCat = {}; activeItems.forEach(i => { const cat = findCategory(i.categoryId); if(!byCat[cat.id]) byCat[cat.id] = { label: cat.name, color: cat.color, amount: 0 }; byCat[cat.id].amount += itemLineTotal(i); }); entries = Object.values(byCat).sort((a,b) => b.amount - a.amount); } 
+    else if(chartMode === 'tag'){ const byTag = {}; activeItems.forEach(i => { const t = (i.tags && i.tags.length > 0) ? i.tags[0] : 'Sans étiquette'; if(!byTag[t]) byTag[t] = { label: t, color: t === 'Sans étiquette' ? '#9CA0AC' : tagColor(t), amount: 0 }; byTag[t].amount += itemLineTotal(i); }); entries = Object.values(byTag).sort((a,b) => b.amount - a.amount); } 
+    else { const byShop = {}; activeItems.forEach(i => { byShop[i.shop] = (byShop[i.shop] || 0) + itemLineTotal(i); }); entries = Object.entries(byShop).sort((a,b) => b[1]-a[1]).map(([shop, amount], idx) => ({ label: shop, amount, color: colorForIndex(idx) })); }
     const chartEl = document.getElementById('shopChart'); if(entries.length === 0){ chartEl.innerHTML = `<span style="font-size:13px;color:var(--muted);">Ajoutez des articles.</span>`; return; }
     const activeEntries = entries.filter(e => !chartExcluded.has(e.label)); const grandTotal = activeEntries.reduce((s,e) => s + e.amount, 0); const r = 62, cx = 80, cy = 80, strokeWidth = 26, circumference = 2 * Math.PI * r; let cumulative = 0;
     const circles = activeEntries.map(e => { const fraction = grandTotal > 0 ? e.amount / grandTotal : 0; const dash = fraction * circumference, gap = circumference - dash, offset = -cumulative; cumulative += dash; return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})"><title>${escapeHtml(e.label)} — ${formatPrice(e.amount)}</title></circle>`; }).join('');
