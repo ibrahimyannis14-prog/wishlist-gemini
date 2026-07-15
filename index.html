@@ -329,9 +329,26 @@
 
   <main class="main-content">
     
-    <div class="page" id="dashboardView" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:calc(100vh - 120px); padding-bottom:0;">
+    <div class="page" id="dashboardView" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; min-height:calc(100vh - 120px); padding-bottom:40px;">
       <h1 class="hero-title" style="margin-bottom: 10px;">Bienvenue sur ton espace</h1>
       <p style="color:var(--muted); margin:0;">Sélectionne une liste dans le menu de gauche ou crées-en une nouvelle.</p>
+
+      <div id="dashboardSummaryWrap" style="width:100%; max-width:900px; margin-top:48px; text-align:left; display:none;">
+        <div class="section-head" style="margin:0 0 20px;"><span class="num" style="background:var(--accent);">Σ</span><h2>Résumé de toutes les listes</h2><div class="line"></div></div>
+        <div class="summary-grid">
+          <div class="total-card">
+            <div class="total-label">Budget total (toutes listes)</div>
+            <div class="total-value" id="dashTotalValue">0 €</div>
+            <div class="total-sub" id="dashTotalSub">0 liste</div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-head">
+              <h4>Prix par liste</h4>
+            </div>
+            <div class="donut-wrap" id="dashboardChart"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="page" id="mainPageContent" style="display:none;">
@@ -465,6 +482,10 @@
   <div class="modal-card">
     <button class="modal-close" onclick="window.closeAuthModal()">✕</button>
     <h2 id="authTitle" style="margin-top:0; font-family:var(--font-display);">Connexion</h2>
+    <div class="field" id="authPseudoField" style="margin-bottom:14px; display:none;">
+      <label class="field-title">Pseudo</label>
+      <input type="text" id="authPseudo" placeholder="Comment veux-tu être appelé(e) ?" maxlength="30">
+    </div>
     <div class="field" style="margin-bottom:14px;">
       <label class="field-title">Email</label>
       <input type="email" id="authEmail" placeholder="votre@email.com">
@@ -510,6 +531,20 @@
       <input type="text" id="renameListName" placeholder="Ex: Ma wishlist" onkeydown="if(event.key === 'Enter') window.confirmRenameList()">
     </div>
     <button class="btn btn-primary" style="width:100%;" onclick="window.confirmRenameList()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- MODALE CHANGER DE PSEUDO -->
+<div class="modal-overlay" id="pseudoModal">
+  <div class="modal-card" style="max-width: 400px;">
+    <button class="modal-close" onclick="window.closePseudoModal()">✕</button>
+    <h2 style="font-family: var(--font-display); margin-top: 0;">Mon pseudo</h2>
+    <div class="field" style="margin-bottom:24px;">
+      <label class="field-title">Pseudo affiché</label>
+      <input type="text" id="pseudoInput" placeholder="Ton pseudo" maxlength="30" onkeydown="if(event.key === 'Enter') window.confirmChangePseudo()">
+    </div>
+    <p id="pseudoError" style="color:var(--bad); font-size:12.5px; display:none; margin-top:-14px; margin-bottom:14px;"></p>
+    <button class="btn btn-primary" style="width:100%;" onclick="window.confirmChangePseudo()">Enregistrer</button>
   </div>
 </div>
 
@@ -606,7 +641,7 @@
   // IMPORTS FIREBASE STORAGE AJOUTÉS
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, query, where, getDocs, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, deleteUser, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
   const firebaseConfig = {
@@ -656,19 +691,22 @@
   window.openAuthModal = function(mode = 'login') {
     const dropdown = document.getElementById('accountDropdown'); if(dropdown) dropdown.classList.remove('open');
     authMode = mode; document.getElementById('authModal').classList.add('open'); document.getElementById('authError').style.display = 'none';
-    document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
-    if(mode === 'login') { document.getElementById('authTitle').innerText = 'Connexion'; document.getElementById('authSubmitBtn').innerText = 'Se connecter'; document.getElementById('authToggleText').innerText = 'Pas de compte ?'; document.getElementById('authToggleLink').innerText = "S'inscrire"; } 
-    else { document.getElementById('authTitle').innerText = 'Créer un compte'; document.getElementById('authSubmitBtn').innerText = "S'inscrire"; document.getElementById('authToggleText').innerText = 'Déjà un compte ?'; document.getElementById('authToggleLink').innerText = "Se connecter"; }
+    document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = ''; document.getElementById('authPseudo').value = '';
+    const pseudoField = document.getElementById('authPseudoField');
+    if(mode === 'login') { pseudoField.style.display = 'none'; document.getElementById('authTitle').innerText = 'Connexion'; document.getElementById('authSubmitBtn').innerText = 'Se connecter'; document.getElementById('authToggleText').innerText = 'Pas de compte ?'; document.getElementById('authToggleLink').innerText = "S'inscrire"; } 
+    else { pseudoField.style.display = 'block'; document.getElementById('authTitle').innerText = 'Créer un compte'; document.getElementById('authSubmitBtn').innerText = "S'inscrire"; document.getElementById('authToggleText').innerText = 'Déjà un compte ?'; document.getElementById('authToggleLink').innerText = "Se connecter"; }
   }
   window.closeAuthModal = function() { document.getElementById('authModal').classList.remove('open'); }
   document.getElementById('authToggleLink').addEventListener('click', (e) => { e.preventDefault(); window.openAuthModal(authMode === 'login' ? 'signup' : 'login'); });
 
   document.getElementById('authSubmitBtn').addEventListener('click', async () => {
     const email = document.getElementById('authEmail').value.trim(); const password = document.getElementById('authPassword').value;
+    const pseudo = document.getElementById('authPseudo').value.trim();
     const errEl = document.getElementById('authError'); errEl.style.display = 'none';
     if(!email || !password) { errEl.innerText = "Veuillez remplir tous les champs."; errEl.style.display = 'block'; return; }
     try {
-      if(authMode === 'login') await signInWithEmailAndPassword(auth, email, password); else await createUserWithEmailAndPassword(auth, email, password);
+      if(authMode === 'login') { await signInWithEmailAndPassword(auth, email, password); } 
+      else { const cred = await createUserWithEmailAndPassword(auth, email, password); if(pseudo) { await updateProfile(cred.user, { displayName: pseudo }); updateAccountUI(cred.user); } }
       window.closeAuthModal();
     } catch(error) {
       let msg = "Une erreur est survenue.";
@@ -685,21 +723,48 @@
     try { await signInWithPopup(auth, provider); window.closeAuthModal(); } catch(error) { if(error.code !== 'auth/popup-closed-by-user') { errEl.innerText = error.message; errEl.style.display = 'block'; } }
   }
 
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
+  function updateAccountUI(user) {
     const accountBtn = document.getElementById('accountBtn');
     const accountBtnLabel = document.getElementById('accountBtnLabel');
     const accountDropdown = document.getElementById('accountDropdown');
     if(user) {
+      const pseudo = user.displayName && user.displayName.trim() ? user.displayName.trim() : (user.email || 'Compte').split('@')[0];
       accountBtn.classList.add('logged-in');
-      accountBtnLabel.innerHTML = `👤 ${escapeHtml((user.email || 'Compte').split('@')[0])}`;
-      accountDropdown.innerHTML = `<div class="account-dropdown-email">${escapeHtml(user.email || '')}</div><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button>`;
+      accountBtnLabel.innerHTML = `👤 ${escapeHtml(pseudo)}`;
+      accountDropdown.innerHTML = `<div class="account-dropdown-email">${escapeHtml(pseudo)}${user.email ? `<br><span style="opacity:0.7;">${escapeHtml(user.email)}</span>` : ''}</div><button class="btn btn-small" onclick="window.openPseudoModal()">✏️ Modifier le pseudo</button><button class="btn btn-small" onclick="window.logout()">Déconnexion</button><button class="btn btn-small" onclick="window.deleteAccount()" style="color:var(--bad); border-color:var(--bad-soft); background:var(--bad-soft);">Supprimer le compte</button>`;
     } else {
       accountBtn.classList.remove('logged-in');
       accountBtnLabel.innerHTML = 'Connexion';
       accountDropdown.innerHTML = `<button class="btn btn-primary btn-small" onclick="window.openAuthModal('login')">Se connecter</button><button class="btn btn-ghost btn-small" onclick="window.openAuthModal('signup')">Créer un compte</button>`;
     }
-    accountDropdown.classList.remove('open');
+  }
+
+  window.openPseudoModal = function() {
+    if(!currentUser) return;
+    const dropdown = document.getElementById('accountDropdown'); if(dropdown) dropdown.classList.remove('open');
+    document.getElementById('pseudoError').style.display = 'none';
+    document.getElementById('pseudoInput').value = currentUser.displayName || '';
+    document.getElementById('pseudoModal').classList.add('open');
+    setTimeout(() => document.getElementById('pseudoInput').focus(), 100);
+  }
+  window.closePseudoModal = function() { document.getElementById('pseudoModal').classList.remove('open'); }
+  window.confirmChangePseudo = async function() {
+    if(!currentUser) return;
+    const val = document.getElementById('pseudoInput').value.trim();
+    const errEl = document.getElementById('pseudoError'); errEl.style.display = 'none';
+    if(!val) { errEl.innerText = "Le pseudo ne peut pas être vide."; errEl.style.display = 'block'; return; }
+    try {
+      await updateProfile(currentUser, { displayName: val });
+      updateAccountUI(currentUser);
+      window.closePseudoModal();
+      window.showToast("Pseudo mis à jour !");
+    } catch(e) { console.error(e); errEl.innerText = "Erreur lors de la mise à jour du pseudo."; errEl.style.display = 'block'; }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    updateAccountUI(user);
+    document.getElementById('accountDropdown').classList.remove('open');
     await updateSidebarLists(); checkOwnershipAndRender();
   });
 
@@ -857,9 +922,10 @@
 
   async function updateSidebarLists() {
     const container = document.getElementById('userListsContainer');
-    if (!currentUser) { container.innerHTML = `<div class="sidebar-section-title">Mes Listes Cloud</div><div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>`; return; }
+    if (!currentUser) { container.innerHTML = `<div class="sidebar-section-title">Mes Listes Cloud</div><div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Connectez-vous pour voir vos listes.</div>`; renderDashboardSummary(null); return; }
     container.innerHTML = `<div style="font-size:12px; color:var(--muted); padding-left:14px; margin-top:20px;">Chargement...</div>`;
     const lists = await fetchUserLists(currentUser.uid);
+    renderDashboardSummary(lists);
     if (lists.length === 0) { container.innerHTML = `<div class="sidebar-section-title">Mes Listes Cloud</div><div style="font-size:12px; color:var(--muted); padding-left:14px; white-space:normal;">Aucune liste pour le moment.</div>`; return; }
     
     let html = '';
@@ -897,7 +963,36 @@
 
   let state = { ownerId: null, name: "Nouvelle liste", collaborators: [], categories: DEFAULT_CATEGORIES.map(c => ({...c})), items: [], tagColors: {} };
   let localCollapsedCats = []; let hasInitCats = false; let isStateLoaded = false; let unsubscribeSnapshot = null;
-  let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0; let chartExcluded = new Set(); 
+  let editingId = null, activeCategoryFilter = 'all', activeTagFilters = new Set(), currentTags = [], chartMode = 'shop', fetchedImage = null, fetchToken = 0; let chartExcluded = new Set(); let dashChartExcluded = new Set();
+
+  // --- Donut réutilisable (utilisé par le résumé de liste ET le résumé global du tableau de bord) ---
+  function renderDonutChart(container, entries, excludedSet, onToggle, emptyMsg = "Ajoutez des articles."){
+    if(!entries.length){ container.innerHTML = `<span style="font-size:13px;color:var(--muted);">${emptyMsg}</span>`; return; }
+    const activeEntries = entries.filter(e => !excludedSet.has(e.label));
+    const grandTotal = activeEntries.reduce((s,e) => s + e.amount, 0);
+    const r = 62, cx = 80, cy = 80, strokeWidth = 26, circumference = 2 * Math.PI * r; let cumulative = 0;
+    const circles = activeEntries.map(e => { const fraction = grandTotal > 0 ? e.amount / grandTotal : 0; const dash = fraction * circumference, gap = circumference - dash, offset = -cumulative; cumulative += dash; return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})"><title>${escapeHtml(e.label)} — ${formatPrice(e.amount)}</title></circle>`; }).join('');
+    const svg = `<svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160">${circles}<text x="${cx}" y="${cy-4}" text-anchor="middle" class="donut-center-value">${formatPrice(grandTotal)}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" class="donut-center-label">au total</text></svg>`;
+    const legend = `<div class="donut-legend"><p style="font-size:10px; color:var(--muted-2); margin:0 0 5px 0;">Cliquez sur une ligne pour l'exclure</p>${entries.map(e => { const isExcluded = excludedSet.has(e.label); const pct = grandTotal > 0 && !isExcluded ? Math.round((e.amount/grandTotal)*100) : 0; return `<div class="legend-row ${isExcluded ? 'excluded' : ''}" data-legend="${escapeHtml(e.label)}"><span class="legend-dot" style="background:${e.color}"></span><span class="legend-label">${escapeHtml(e.label)}</span><span class="legend-pct">${isExcluded ? '-' : pct + '%'}</span><span class="legend-value">${formatPrice(e.amount)}</span></div>`; }).join('')}</div>`;
+    container.innerHTML = svg + legend;
+    container.querySelectorAll('.legend-row').forEach(row => { row.addEventListener('click', () => { onToggle(row.dataset.legend); }); });
+  }
+
+  function renderDashboardSummary(lists){
+    const wrap = document.getElementById('dashboardSummaryWrap');
+    if(!wrap) return;
+    if(!currentUser || !lists || lists.length === 0){ wrap.style.display = 'none'; return; }
+    const entries = lists.map((list, idx) => {
+      const items = (list.items || []).filter(i => !i.purchased);
+      const amount = items.reduce((s,i) => s + itemLineTotal(i), 0);
+      return { label: list.name || 'Liste sans nom', amount, color: colorForIndex(idx) };
+    });
+    const grandTotal = entries.reduce((s,e) => s + e.amount, 0);
+    document.getElementById('dashTotalValue').textContent = formatPrice(grandTotal);
+    document.getElementById('dashTotalSub').textContent = `${lists.length} liste${lists.length>1?'s':''}`;
+    renderDonutChart(document.getElementById('dashboardChart'), entries, dashChartExcluded, (label) => { if(dashChartExcluded.has(label)) dashChartExcluded.delete(label); else dashChartExcluded.add(label); renderDashboardSummary(lists); }, "Ajoutez des articles dans vos listes.");
+    wrap.style.display = 'block';
+  }
 
   function uid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
   function tagColor(tag){ if(state.tagColors && state.tagColors[tag]) return state.tagColors[tag]; let hash = 0; for(let i=0; i<tag.length; i++){ hash = tag.charCodeAt(i) + ((hash<<5)-hash); } return CAT_PALETTE[Math.abs(hash) % CAT_PALETTE.length]; }
@@ -1285,13 +1380,8 @@
     if(chartMode === 'category'){ const byCat = {}; activeItems.forEach(i => { const cat = findCategory(i.categoryId); if(!byCat[cat.id]) byCat[cat.id] = { label: cat.name, color: cat.color, amount: 0 }; byCat[cat.id].amount += itemLineTotal(i); }); entries = Object.values(byCat).sort((a,b) => b.amount - a.amount); } 
     else if(chartMode === 'tag'){ const byTag = {}; activeItems.forEach(i => { const t = (i.tags && i.tags.length > 0) ? i.tags[0] : 'Sans étiquette'; if(!byTag[t]) byTag[t] = { label: t, color: t === 'Sans étiquette' ? '#9CA0AC' : tagColor(t), amount: 0 }; byTag[t].amount += itemLineTotal(i); }); entries = Object.values(byTag).sort((a,b) => b.amount - a.amount); } 
     else { const byShop = {}; activeItems.forEach(i => { byShop[i.shop] = (byShop[i.shop] || 0) + itemLineTotal(i); }); entries = Object.entries(byShop).sort((a,b) => b[1]-a[1]).map(([shop, amount], idx) => ({ label: shop, amount, color: colorForIndex(idx) })); }
-    const chartEl = document.getElementById('shopChart'); if(entries.length === 0){ chartEl.innerHTML = `<span style="font-size:13px;color:var(--muted);">Ajoutez des articles.</span>`; return; }
-    const activeEntries = entries.filter(e => !chartExcluded.has(e.label)); const grandTotal = activeEntries.reduce((s,e) => s + e.amount, 0); const r = 62, cx = 80, cy = 80, strokeWidth = 26, circumference = 2 * Math.PI * r; let cumulative = 0;
-    const circles = activeEntries.map(e => { const fraction = grandTotal > 0 ? e.amount / grandTotal : 0; const dash = fraction * circumference, gap = circumference - dash, offset = -cumulative; cumulative += dash; return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${e.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})"><title>${escapeHtml(e.label)} — ${formatPrice(e.amount)}</title></circle>`; }).join('');
-    const svg = `<svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160">${circles}<text x="${cx}" y="${cy-4}" text-anchor="middle" class="donut-center-value">${formatPrice(grandTotal)}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" class="donut-center-label">au total</text></svg>`;
-    const legend = `<div class="donut-legend"><p style="font-size:10px; color:var(--muted-2); margin:0 0 5px 0;">Cliquez sur une ligne pour l'exclure</p>${entries.map(e => { const isExcluded = chartExcluded.has(e.label); const pct = grandTotal > 0 && !isExcluded ? Math.round((e.amount/grandTotal)*100) : 0; return `<div class="legend-row ${isExcluded ? 'excluded' : ''}" data-legend="${escapeHtml(e.label)}"><span class="legend-dot" style="background:${e.color}"></span><span class="legend-label">${escapeHtml(e.label)}</span><span class="legend-pct">${isExcluded ? '-' : pct + '%'}</span><span class="legend-value">${formatPrice(e.amount)}</span></div>`; }).join('')}</div>`;
-    chartEl.innerHTML = svg + legend;
-    chartEl.querySelectorAll('.legend-row').forEach(row => { row.addEventListener('click', () => { const label = row.dataset.legend; if (chartExcluded.has(label)) chartExcluded.delete(label); else chartExcluded.add(label); renderSummary(); }); });
+    const chartEl = document.getElementById('shopChart');
+    renderDonutChart(chartEl, entries, chartExcluded, (label) => { if (chartExcluded.has(label)) chartExcluded.delete(label); else chartExcluded.add(label); renderSummary(); });
   }
 
   document.querySelectorAll('.toggle-btn').forEach(btn => { btn.addEventListener('click', () => { chartMode = btn.dataset.chartmode; chartExcluded.clear(); document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn)); renderSummary(); }); });
